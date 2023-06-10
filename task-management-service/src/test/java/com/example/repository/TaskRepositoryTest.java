@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.List;
+
 @SpringBootTest
 @ContextConfiguration(classes = TaskManagementServiceApplication.class)
 public class TaskRepositoryTest {
@@ -63,5 +65,11 @@ public class TaskRepositoryTest {
                 .build();
 
         Assertions.assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
+
+    @Test
+    void getAllTasksTest() {
+        List<Task> listOfTasks = taskRepository.findByUserId(1L);
+        Assertions.assertTrue(listOfTasks.size() > 0);
     }
 }

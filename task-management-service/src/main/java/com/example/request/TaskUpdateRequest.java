@@ -3,8 +3,6 @@ package com.example.request;
 
 import com.example.model.Category;
 import com.example.model.Priority;
-
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -16,11 +14,17 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class TaskRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+public class TaskUpdateRequest {
+    @NotBlank(message = "please provide taskId to update")
+    @NotEmpty(message = "please provide taskId to update")
+    // this is taskId
+    private Long id;
+
     @NotBlank(message = "title should not be blank")
+    @NotEmpty(message = "title is required")
     private String title;
 
     private String description;
@@ -29,10 +33,8 @@ public class TaskRequest {
 
     private Priority priority;
 
-    @NotNull(message = "category should not be blank")
     private Category category;
 
-    @Min(value = 1, message = "please provide valid userId")
+    @NotNull(message = "please provide the valid userId to update")
     private long userId;
-
 }

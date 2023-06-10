@@ -4,9 +4,14 @@ import com.example.config.RestEndpoints;
 import com.example.request.TaskRequest;
 import com.example.response.TaskResponse;
 import com.example.service.TaskService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(RestEndpoints.BASE)
@@ -20,8 +25,14 @@ public class TaskController {
     }
 
     @PostMapping(RestEndpoints.CREATE_TASK)
-    public ResponseEntity<?> createTask(@RequestBody TaskRequest taskRequest) {
+    public ResponseEntity<?> createTask(@RequestBody @Valid TaskRequest taskRequest) {
         TaskResponse taskResponse = taskService.createTask(taskRequest);
-        return ResponseEntity.ok().body(taskResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskResponse);
+    }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<?> deleteTaskById(@PathVariable long taskId) {
+        taskService.deleteTask(taskId);
+        return ResponseEntity.ok().body("task has been deleted successfully");
     }
 }

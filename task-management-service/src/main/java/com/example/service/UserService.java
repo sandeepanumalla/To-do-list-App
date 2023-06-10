@@ -1,6 +1,11 @@
 package com.example.service;
 
+import com.example.response.TaskResponse;
+
+import java.util.List;
+
 public interface UserService {
-    void getAllTasks();
+
+    public List<TaskResponse> getAllTasks(long userId);
 
 }

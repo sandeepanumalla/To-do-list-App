@@ -1,6 +1,8 @@
 package com.example.model;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,10 +24,16 @@ public class User {
     @Column(nullable = false)
     private String username;
 
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
     @Column(nullable = false)
     private String email;
 
+    //new
+    @Column(nullable = false)
+    private String firstName;
+
+    private String lastName;
+
     @Column(nullable = false)
     private String password;
-
 }

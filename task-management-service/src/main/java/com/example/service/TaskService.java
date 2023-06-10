@@ -2,15 +2,15 @@ package com.example.service;
 
 import com.example.model.Task;
 import com.example.request.TaskRequest;
+import com.example.request.TaskUpdateRequest;
 import com.example.response.TaskResponse;
 
 import java.util.List;
 
 public interface TaskService {
     TaskResponse createTask(TaskRequest taskRequest);
-    List<TaskResponse> getAllTasks();
     TaskResponse getTaskById();
-    TaskResponse updateTask(long taskId);
+    TaskResponse updateTask(TaskUpdateRequest taskUpdateRequest);
     void deleteTask(long taskId);
     void setTaskPriority();
     void updateCategory();
