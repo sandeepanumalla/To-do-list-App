@@ -1,5 +1,6 @@
 package com.example.utils;
 
+import com.example.model.User;
 import com.example.taskmanagementservice.TaskManagementServiceApplication;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,10 +21,15 @@ public class JwtServiceTest {
 
     @Test
     public void generateTokenTest() {
-        String username  = "sandeep";
-        String token = jwtService.generateToken(username);
+        User user = User.builder()
+                .username("sandeep")
+                .build();
+        String token = jwtService.generateToken(user.getUsername());
         System.out.println("the token is " + token);
         String actualUsername = jwtService.extractUsername(token);
-        Assertions.assertEquals(username, actualUsername);
+        boolean isTokenValid = jwtService.validateToken(token, user);
+        Assertions.assertEquals(user.getUsername(), actualUsername);
     }
+
+//    public void
 }

@@ -72,4 +72,6 @@ public class TaskRepositoryTest {
         List<Task> listOfTasks = taskRepository.findByUserId(1L);
         Assertions.assertTrue(listOfTasks.size() > 0);
     }
+
+
 }

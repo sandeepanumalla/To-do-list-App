@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 public final class RestEndpoints {
-    public static final String BASE = "/api/tasks";
+    public static final String TASKS = "/api/tasks";
     public static final String USER = "/api/users";
     public static final String AUTH = "/api/auth";
     public static final String CREATE_TASK = "/";
@@ -19,7 +19,7 @@ public final class RestEndpoints {
     public static final String GET_TASK_BY_ID = "/{taskId}";
 
     public static final String SIGN_IN = "/signin";
-
+    public static final String REGISTER = "/register";
     public static final String SIGN_OUT = "/signout";
 
 }

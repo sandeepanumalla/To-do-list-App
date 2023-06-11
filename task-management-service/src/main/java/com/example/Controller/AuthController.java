@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.config.RestEndpoints;
+import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
 import com.example.service.AuthService;
 import jakarta.validation.Valid;
@@ -22,10 +23,16 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @PostMapping(RestEndpoints.REGISTER)
+    public ResponseEntity<?> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+        String token = authService.registerUser(userRegisterRequest);
+        return ResponseEntity.ok().body("you are registered successfully");
+    }
+
     @PostMapping(RestEndpoints.SIGN_IN)
     public ResponseEntity<?> signIn(@RequestBody @Valid UserSignInRequest userSignInRequest) {
-        authService.signIn(userSignInRequest);
-        return ResponseEntity.ok().body("logged in successfully");
+        String token = authService.signIn(userSignInRequest);
+        return ResponseEntity.ok().body(token);
     }
 
     public void signOut() {

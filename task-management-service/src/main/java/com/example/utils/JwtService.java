@@ -1,14 +1,13 @@
 package com.example.utils;
 
 
+import com.example.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,13 +17,12 @@ import java.util.function.Function;
 public class JwtService {
 
     private String secretKey="lkashdfoaisdvoalsdifjiLIUDHFADSJNoiDSFSOIDFHdsOISDU02937JFDSIFJfu1op2i3u12k3";
-    private long expirationInMs = 1000 * 5;
+    private long expirationInMs = 1000 * 500;
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, username);
     }
-
 
     private String createToken(Map<String, Object> claims, String subject) {
         Instant now = Instant.now();
@@ -66,9 +64,8 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Validate a JWT token
-//    public Boolean validateToken(String token, UserDetails userDetails) {
-//        String username = extractUsername(token);
-//        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-//    }
+    public Boolean validateToken(String token, User userDetails) {
+        String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
 }
