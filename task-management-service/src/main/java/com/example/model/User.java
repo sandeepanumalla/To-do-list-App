@@ -3,6 +3,7 @@ package com.example.model;
 import com.example.service.UserService;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,16 +23,18 @@ import java.util.Collection;
 @Table(name = "task_user")
 public class User implements UserDetails {
 
+//    @Id
+//    @SequenceGenerator(name = "user_gen", sequenceName = "user_gen", allocationSize = 1)
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_gen")
     @Id
-    @SequenceGenerator(name = "user_gen", sequenceName = "user_gen", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_gen")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String username;
 
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     //new

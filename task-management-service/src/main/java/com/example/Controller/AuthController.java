@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.SQLException;
+
 @RestController
 @RequestMapping(RestEndpoints.AUTH)
 public class AuthController {
@@ -24,7 +26,7 @@ public class AuthController {
     }
 
     @PostMapping(RestEndpoints.REGISTER)
-    public ResponseEntity<?> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+    public ResponseEntity<?> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) throws SQLException {
         String token = authService.registerUser(userRegisterRequest);
         return ResponseEntity.ok().body("you are registered successfully");
     }

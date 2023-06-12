@@ -8,6 +8,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,8 @@ import java.security.SignatureException;
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
+    Logger logger = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+
     private final JwtService jwtService;
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
@@ -37,6 +41,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
+        logger.info("inside do Filter method");
         String token = extractToken(request);
         if(token == null) {
             filterChain.doFilter(request, response);
