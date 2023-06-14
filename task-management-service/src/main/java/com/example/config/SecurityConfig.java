@@ -40,6 +40,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/tasks/*").fullyAuthenticated()
                             .requestMatchers("/api/users/*").fullyAuthenticated();
                 })
+                .oauth2Login(auth -> auth.loginPage("/signing").defaultSuccessUrl("/home"))
                 .exceptionHandling(exceptionHandling -> {
                     exceptionHandling.authenticationEntryPoint(jwtAuthenticationException);
                 })

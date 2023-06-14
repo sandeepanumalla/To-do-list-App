@@ -7,10 +7,7 @@ import com.example.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 
@@ -35,6 +32,11 @@ public class AuthController {
     public ResponseEntity<?> signIn(@RequestBody @Valid UserSignInRequest userSignInRequest) {
         String token = authService.signIn(userSignInRequest);
         return ResponseEntity.ok().body(token);
+    }
+
+    @GetMapping("/signing")
+    public String signIn() {
+        return "redirect:/oauth2/authorization/google";
     }
 
     public void signOut() {
