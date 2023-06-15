@@ -53,6 +53,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     }
 
     public User emailOrUsernameLookUp(String emailOrUsername) {
+        return getUser(emailOrUsername, validator, userRepository);
+    }
+
+    static User getUser(String emailOrUsername, ValidEmailOrUsernameValidator validator, UserRepository userRepository) {
         if(validator.isValidUsername(emailOrUsername)
                 && userRepository.existsByUsername(emailOrUsername)) {
             return userRepository.findUserByUsername(emailOrUsername)
@@ -66,7 +70,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     }
 
     private UsernamePasswordAuthenticationToken checkPassword(String password, User user) {
-        if(password.equals(user.getPassword())) {
+        if(passwordEncoder.matches(password, user.getPassword())) {
             List<GrantedAuthority> authorityList = new ArrayList<>();
             authorityList.add(new SimpleGrantedAuthority("default"));
 //            UserDetails principal = new org.springframework.security.core.userdetails.User(

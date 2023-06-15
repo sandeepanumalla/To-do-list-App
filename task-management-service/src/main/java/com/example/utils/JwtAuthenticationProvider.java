@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.utils.CustomAuthenticationProvider.getUser;
+
 @Component
 public class JwtAuthenticationProvider implements AuthenticationProvider {
 
@@ -48,16 +50,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     }
 
     public User emailOrUsernameLookUp(String emailOrUsername) {
-        if(validator.isValidUsername(emailOrUsername)
-                && userRepository.existsByUsername(emailOrUsername)) {
-            return userRepository.findUserByUsername(emailOrUsername)
-                    .orElseThrow(() -> new UsernameNotFoundException("given email or username is not registered"));
-        }
-        if(validator.isValidEmail(emailOrUsername) && userRepository.existsByEmail(emailOrUsername)) {
-            return userRepository.findUserByEmail(emailOrUsername)
-                    .orElseThrow(() -> new UsernameNotFoundException("given email or username is not registered"));
-        }
-        else throw new BadCredentialsException("User is not registered");
+        return getUser(emailOrUsername, validator, userRepository);
     }
 
     private UsernamePasswordAuthenticationToken checkPassword(String password, User user) {

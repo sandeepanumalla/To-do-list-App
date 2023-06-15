@@ -1,8 +1,10 @@
 package com.example.filters;
 
 import com.example.model.User;
+import com.example.request.UserSignInRequest;
 import com.example.utils.JwtAuthenticationProvider;
 import com.example.utils.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +44,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
         logger.info("inside do Filter method");
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        UserSignInRequest requestBody = objectMapper.readValue(request.getInputStream(), UserSignInRequest.class);
+//        String usernameOrEmail = requestBody.getEmailOrUsername();
+//        String password = requestBody.getPassword();
+
         String token = extractToken(request);
         if(token == null) {
             filterChain.doFilter(request, response);
@@ -79,6 +86,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private void setAuthentication(String username) {
         User user = jwtAuthenticationProvider.emailOrUsernameLookUp(username);
+//        if(user.getPassword().equals())
         Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
         Authentication authenticated = jwtAuthenticationProvider.authenticate(authentication);
         SecurityContextHolder.getContext().setAuthentication(authenticated);
