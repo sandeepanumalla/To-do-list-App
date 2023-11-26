@@ -56,7 +56,7 @@ TaskMaster is a versatile and user-friendly task management application designed
 Application is available on below localhost with port 8081
 
 ### Available Endpoints
-After run application you can check on http://localhost:8081/swagger-ui/ which endpoints are available
+After run application you can check on http://localhost:8081/swagger-ui/index.html which endpoints are available
 ![img.png](img.png)
 ![img_1.png](img_1.png)
 
