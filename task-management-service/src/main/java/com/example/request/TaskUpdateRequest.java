@@ -5,7 +5,6 @@ import com.example.model.Category;
 import com.example.model.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +17,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskUpdateRequest {
-    @NotBlank(message = "please provide taskId to update")
-    @NotEmpty(message = "please provide taskId to update")
-    // this is taskId
+//    @NotBlank(message = "please provide taskId to update")
+//    @NotEmpty(message = "please provide taskId to update")
+//    // this is taskId
     private Long id;
 
     @NotBlank(message = "title should not be blank")
@@ -35,6 +34,5 @@ public class TaskUpdateRequest {
 
     private Category category;
 
-    @NotNull(message = "please provide the valid userId to update")
     private long userId;
 }

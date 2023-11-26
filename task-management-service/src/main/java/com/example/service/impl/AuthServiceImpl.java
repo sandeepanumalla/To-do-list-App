@@ -1,12 +1,17 @@
 package com.example.service.impl;
 
+import com.example.model.PasswordToken;
 import com.example.model.User;
+import com.example.repository.ResetPasswordRepository;
 import com.example.repository.UserRepository;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
 import com.example.service.AuthService;
+import com.example.service.MailService;
+import com.example.service.ResetPasswordTokenService;
 import com.example.utils.CustomAuthenticationProvider;
 import com.example.utils.JwtService;
+import com.example.utils.TokenBlacklistService;
 import com.example.validations.ValidEmailOrUsernameValidator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,30 +20,49 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.sql.SQLException;
+import java.time.Instant;
+import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final JwtService jwtService;
+
     private final ValidEmailOrUsernameValidator validator;
+
     private final PasswordEncoder passwordEncoder;
 
     private final CustomAuthenticationProvider customAuthenticationProvider;
+
     private final UserRepository userRepository;
+
     private final ModelMapper modelMapper;
+
+    private final MailService mailService;
+
+    private final ResetPasswordTokenService resetPasswordTokenService;
+
+    private final ResetPasswordRepository resetPasswordRepository;
+
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Autowired
     public AuthServiceImpl(JwtService jwtService, ValidEmailOrUsernameValidator validator, PasswordEncoder passwordEncoder, CustomAuthenticationProvider customAuthenticationProvider,
-                           UserRepository userRepository, ModelMapper modelMapper) {
+                           UserRepository userRepository, ModelMapper modelMapper, MailServiceImpl mailService, ResetPasswordTokenServiceImpl resetPasswordTokenService,
+                           ResetPasswordRepository resetPasswordRepository, TokenBlacklistService tokenBlacklistService) {
         this.jwtService = jwtService;
         this.validator = validator;
         this.passwordEncoder = passwordEncoder;
         this.customAuthenticationProvider = customAuthenticationProvider;
-
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.mailService = mailService;
+        this.resetPasswordTokenService = resetPasswordTokenService;
+        this.resetPasswordRepository = resetPasswordRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -68,8 +92,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void signOut() {
-
+    public void signOut(String token) {
+        tokenBlacklistService.addRevokedTokens(token, Instant.now());
     }
 
     @Override
@@ -77,6 +101,7 @@ public class AuthServiceImpl implements AuthService {
         checkUserAvailabilityInDatabase(userRegisterRequest);
         String encodedPassword = passwordEncoder.encode(userRegisterRequest.getPassword());
         User user =  modelMapper.map(userRegisterRequest, User.class);
+
         user.setPassword(encodedPassword);
         userRepository.save(user);
         return "user has been registered successfully";
@@ -99,8 +124,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void forgotPassword() {
+    public void forgotPassword(String email) {
+        Optional<User> user = userRepository.findUserByEmail(email);
+        if(!userRepository.existsByEmail(email) || user.isEmpty()) {
+            throw new IllegalArgumentException("given email is not registered with us");
+        }
+        String generatedToken = resetPasswordTokenService.generatePasswordTokenForUser();
+        PasswordToken passwordToken = PasswordToken.builder()
+                .token(generatedToken)
+                .user(user.get())
+                .expiryDate(resetPasswordTokenService.calculateExpirationDate(5L))
+                .build();
+        resetPasswordRepository.save(passwordToken);
+        String body = String.format("click on the link to reset your password. %s", generateResetUrl().toString());
+        mailService.send(user.get().getEmail(), "reset password", body);
+    }
 
+    public UriComponents generateResetUrl() {
+        return UriComponentsBuilder
+                .fromUriString("http://localhost:8080")
+                .path("/reset-password")
+                .path("/"+resetPasswordTokenService.generatePasswordTokenForUser())
+                .build();
     }
 
     @Override

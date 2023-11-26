@@ -1,31 +1,25 @@
 package com.example.model;
 
-import com.example.service.UserService;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+
+import java.io.Serializable;
+import java.util.List;
 
 import java.util.Collection;
+import java.util.Set;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Builder
-@Table(name = "task_user")
-public class User implements UserDetails {
+@Table(name = "user")
+public class User implements UserDetails, Serializable {
 
-//    @Id
-//    @SequenceGenerator(name = "user_gen", sequenceName = "user_gen", allocationSize = 1)
-//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_gen")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -37,7 +31,6 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    //new
     @Column(nullable = false)
     private String firstName;
 
@@ -45,6 +38,31 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    @OneToMany(mappedBy = "owner")
+    private List<Task> ownTasks;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinTable(
+            name = "shared_tasks",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "userId"),
+            inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id")
+    )    private Set<Task> sharedTasks;
+
+    @OneToOne(mappedBy = "userId")
+    private Profile profile;
+
+//    @ManyToMany(mappedBy = "projectMembers", fetch = FetchType.LAZY)
+//    private Set<Project> projects;
+
+    @ManyToMany(mappedBy = "assignedToUsers")
+    private Set<Task> assignedTo;
+
+    @OneToMany(mappedBy = "user")
+    private List<UserNotificationPreferences> notificationPreferences;
+
+    @OneToMany(mappedBy = "user")
+    private List<UserNotifications> userNotifications;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

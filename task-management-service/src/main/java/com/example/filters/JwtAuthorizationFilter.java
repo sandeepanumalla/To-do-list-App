@@ -1,31 +1,34 @@
 package com.example.filters;
 
 import com.example.model.User;
-import com.example.request.UserSignInRequest;
 import com.example.utils.JwtAuthenticationProvider;
 import com.example.utils.JwtService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.utils.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.SignatureException;
+import java.util.Arrays;
 
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
+
+    private final String[] allowedUrls = {"/api/auth/.*", "/test/.*",
+            "/v3/api-docs/.*", "/swagger-ui/.*",
+            "/task-management-sockets/.*"
+    };
 
     Logger logger = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
 
@@ -33,22 +36,35 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
+    private final TokenBlacklistService tokenBlacklistService;
+
 
     @Autowired
-    public JwtAuthorizationFilter(JwtService jwtService, JwtAuthenticationProvider jwtAuthenticationProvider) {
+    public JwtAuthorizationFilter(JwtService jwtService, JwtAuthenticationProvider jwtAuthenticationProvider, TokenBlacklistService tokenBlacklistService) {
         this.jwtService = jwtService;
         this.jwtAuthenticationProvider = jwtAuthenticationProvider;
+        this.tokenBlacklistService = tokenBlacklistService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        for(String allowedPath: allowedUrls) {
+            if(path.matches(allowedPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
         logger.info("inside do Filter method");
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        UserSignInRequest requestBody = objectMapper.readValue(request.getInputStream(), UserSignInRequest.class);
-//        String usernameOrEmail = requestBody.getEmailOrUsername();
-//        String password = requestBody.getPassword();
 
+        if(request.getRequestURL().toString().equals("http://localhost:8081/task-management-sockets")) {
+
+        }
         String token = extractToken(request);
         if(token == null) {
             filterChain.doFilter(request, response);
@@ -58,35 +74,36 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         User user = User.builder()
                 .username(username)
                 .build();
-        if(!jwtService.validateToken(token, user)) {
-//            throw new BadCredentialsException("token is expired or invalid");
+        if(!jwtService.isValidToken(token, user) || tokenBlacklistService.isRevokedToken(token)) {
             filterChain.doFilter(request, response);
         }
         if(!checkAuthentication(username)) {
             setAuthentication(username);
         }
+        request.setAttribute("jwtToken", token);
         filterChain.doFilter(request, response);
-
     }
 
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
+        Cookie httpCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt"))
+                .findAny().orElse(null);
         String token;
-        if(header == null) {
+        if(header == null && httpCookie == null) {
             return null;
         }
-        if(header.startsWith("Bearer ")) {
+        if(header != null && header.startsWith("Bearer ")) {
             token = header.substring(7);
+        } else if(httpCookie != null) {
+            token = httpCookie.getValue();
         } else {
             token = header;
         }
-
         return token;
     }
 
     private void setAuthentication(String username) {
         User user = jwtAuthenticationProvider.emailOrUsernameLookUp(username);
-//        if(user.getPassword().equals())
         Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
         Authentication authenticated = jwtAuthenticationProvider.authenticate(authentication);
         SecurityContextHolder.getContext().setAuthentication(authenticated);
@@ -97,5 +114,4 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         return authentication != null && authentication.isAuthenticated()
                 && authentication.getName().equals(username);
     }
-
 }
