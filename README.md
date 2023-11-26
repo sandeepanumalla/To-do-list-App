@@ -12,7 +12,7 @@ TaskMaster is a versatile and user-friendly task management application designed
 
 ### Task Management:
 
-- Create tasks with titles, descriptions, due dates, categories, and priority flags.
+- Create tasks with titles, descriptions, due dates, categories, and important flags.
 - View a list of all tasks, filterable by status (pending or completed) and category (work, personal, etc.).
 - View detailed information about a single task.
 - Update and edit task details as needed.
@@ -30,7 +30,7 @@ TaskMaster is a versatile and user-friendly task management application designed
 - Receive notifications for upcoming tasks and deadlines.
 - View and manage your reminders easily.
 
-### Collaboration and Sharing (Optional):
+### Collaboration and Sharing:
 
 - Share tasks with other users.
 - Assign tasks to team members.
@@ -46,11 +46,6 @@ TaskMaster is a versatile and user-friendly task management application designed
 - Admins can access user management features.
 - Admins can view user tasks for administrative purposes.
 
-### Security and Privacy:
-
-- TaskMaster prioritizes user data security and privacy.
-- Authentication and authorization mechanisms ensure data protection.
-- User data is encrypted and stored securely.
 
 ### Web
 Application is available on below localhost with port 8081
