@@ -14,6 +14,8 @@ public interface AuthService {
 
     public String registerUser(UserRegisterRequest userRegisterRequest) throws SQLException;
 
+    void checkUserAvailabilityInDatabase(UserRegisterRequest userRegisterRequest) throws IllegalArgumentException;
+
     public void authenticate();
 
     public void forgotPassword(String email);

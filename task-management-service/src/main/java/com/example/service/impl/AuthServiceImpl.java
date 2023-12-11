@@ -3,6 +3,7 @@ package com.example.service.impl;
 import com.example.model.PasswordToken;
 import com.example.model.User;
 import com.example.repository.ResetPasswordRepository;
+import com.example.repository.SignupTypeRepository;
 import com.example.repository.UserRepository;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
@@ -13,8 +14,11 @@ import com.example.utils.CustomAuthenticationProvider;
 import com.example.utils.JwtService;
 import com.example.utils.TokenBlacklistService;
 import com.example.validations.ValidEmailOrUsernameValidator;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,10 +53,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final TokenBlacklistService tokenBlacklistService;
 
+    private final SignupTypeRepository signupTypeRepository;
+
     @Autowired
     public AuthServiceImpl(JwtService jwtService, ValidEmailOrUsernameValidator validator, PasswordEncoder passwordEncoder, CustomAuthenticationProvider customAuthenticationProvider,
                            UserRepository userRepository, ModelMapper modelMapper, MailServiceImpl mailService, ResetPasswordTokenServiceImpl resetPasswordTokenService,
-                           ResetPasswordRepository resetPasswordRepository, TokenBlacklistService tokenBlacklistService) {
+                           ResetPasswordRepository resetPasswordRepository, TokenBlacklistService tokenBlacklistService, SignupTypeRepository signupTypeRepository) {
         this.jwtService = jwtService;
         this.validator = validator;
         this.passwordEncoder = passwordEncoder;
@@ -63,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
         this.resetPasswordTokenService = resetPasswordTokenService;
         this.resetPasswordRepository = resetPasswordRepository;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.signupTypeRepository = signupTypeRepository;
     }
 
     @Override
@@ -75,7 +82,6 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("received the request"+userSignInRequest.toString());
         String token = jwtService.generateToken(emailOrUsername);
         System.out.println("is validated " + validator.toString());
-
         return token;
     }
 
@@ -97,16 +103,27 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String registerUser(UserRegisterRequest userRegisterRequest) throws IllegalArgumentException {
-        checkUserAvailabilityInDatabase(userRegisterRequest);
+    public String registerUser(@Valid UserRegisterRequest userRegisterRequest) throws IllegalArgumentException {
+//        checkUserAvailabilityInDatabase(userRegisterRequest);
         String encodedPassword = passwordEncoder.encode(userRegisterRequest.getPassword());
         User user =  modelMapper.map(userRegisterRequest, User.class);
-
         user.setPassword(encodedPassword);
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (ConstraintViolationException e) {
+            throw new IllegalArgumentException("Username or email is already taken.");
+        } catch (DataIntegrityViolationException e) {
+            if(e.getMessage().contains("Duplicate entry")) {
+                throw new IllegalArgumentException("Username or email is already taken.");
+            } else if(e.getMessage().contains("cannot be null")) {
+                throw new IllegalArgumentException(e.getRootCause());
+            }
+            throw new IllegalArgumentException("Data integrity violation occurred.");
+        }
         return "user has been registered successfully";
     }
 
+    @Override
     public void checkUserAvailabilityInDatabase(UserRegisterRequest userRegisterRequest) throws IllegalArgumentException {
         String email = userRegisterRequest.getEmail();
         String username = userRegisterRequest.getUsername();

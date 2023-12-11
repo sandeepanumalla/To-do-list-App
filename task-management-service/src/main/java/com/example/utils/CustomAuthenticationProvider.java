@@ -71,11 +71,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         if(passwordEncoder.matches(password, user.getPassword())) {
             List<GrantedAuthority> authorityList = new ArrayList<>();
             authorityList.add(new SimpleGrantedAuthority("default"));
-//            UserDetails principal = new org.springframework.security.core.userdetails.User(
-//                    user.getUsername(), user.getPassword(), authorityList
-//            );
             return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(), authorityList);
         } else throw new BadCredentialsException("invalid credentails");
     }
-
 }

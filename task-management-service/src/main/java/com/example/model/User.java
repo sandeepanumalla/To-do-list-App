@@ -21,7 +21,7 @@ import java.util.Set;
 public class User implements UserDetails, Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long userId;
 
     @Column(nullable = false, unique = true)
@@ -52,8 +52,6 @@ public class User implements UserDetails, Serializable {
     @OneToOne(mappedBy = "userId")
     private Profile profile;
 
-//    @ManyToMany(mappedBy = "projectMembers", fetch = FetchType.LAZY)
-//    private Set<Project> projects;
 
     @ManyToMany(mappedBy = "assignedToUsers")
     private Set<Task> assignedTo;
@@ -63,6 +61,10 @@ public class User implements UserDetails, Serializable {
 
     @OneToMany(mappedBy = "user")
     private List<UserNotifications> userNotifications;
+
+//    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
+//    @JoinColumn(name = "signup_type_id", nullable = false)
+//    private SignupType signupType;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

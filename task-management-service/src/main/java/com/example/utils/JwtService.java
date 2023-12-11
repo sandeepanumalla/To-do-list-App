@@ -8,6 +8,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.function.Function;
 @Component
 public class JwtService {
 
-    byte[] secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512).getEncoded();
+    Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
@@ -35,13 +36,13 @@ public class JwtService {
                 .setSubject(subject)
                 .setIssuedAt(Date.from(Instant.now()))
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, secretKey)
+                .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     // Extract the username from a JWT token
     public String extractUsername(String token) {
-        return extractClaim(token, (claim) -> claim.getSubject());
+        return extractClaim(token, Claims::getSubject);
     }
 
     // Extract a claim from a JWT token using a provided claim resolver function
@@ -52,7 +53,7 @@ public class JwtService {
 
     // Extract all claims from a JWT token
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
     // Check if a JWT token is expired

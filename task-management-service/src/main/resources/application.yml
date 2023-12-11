@@ -12,10 +12,12 @@ spring:
     hikari:
       maximum-pool-size: 10
 
+
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
+#    defer-datasource-initialization: true
 
   application:
     name: task-management-service
@@ -25,8 +27,11 @@ spring:
       client:
         registration:
           google:
-            client-id: GOOGLE_CLIENT_ID
-            client-secret: GOOGLE_SECRET_ID
+#            client-id: 510095165481-382ece7lvck30beqc5624vrt5922rju6.apps.googleusercontent.com
+            client-id: ${CLIENT_ID}
+
+#            client-secret: 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
+            client-secret: ${CLIENT_SECRET}
   mail:
     password: skf2
     username: sandeepgfgjava@gmail.com
@@ -36,3 +41,23 @@ spring:
     redis:
       host: localhost
       port: 6379
+#  sql:
+#    init:
+#      mode: always
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+
+
+#  server.port=8080
+#  spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+#  spring.datasource.url=jdbc:sqlserver://localhost:55535;databaseName=task_management;trustServerCertificate=true
+#  spring.datasource.username=root
+#  spring.datasource.password=password
+#  spring.jpa.show-sql=false
+#  spring.jpa.hibernate.ddl-auto=update
+#  spring.application.name=task-management-service
+#  spring.security.oauth2.client.registration.google.client-id=GOOGLE_CLIENT_ID
+#  spring.security.oauth2.client.registration.google.client-secret=GOOGLE_SECRET_ID

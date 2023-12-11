@@ -1,13 +1,17 @@
 package com.example.Controller;
 
 import com.example.config.RestEndpoints;
+import com.example.request.OAuth2UserRegisterRequest;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
 import com.example.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +23,17 @@ import java.util.Arrays;
 
 @RestController
 @RequestMapping(RestEndpoints.AUTH)
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
 
+    private final ModelMapper mapper;
+
     @Autowired
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, ModelMapper mapper) {
         this.authService = authService;
+        this.mapper = mapper;
     }
 
     @PostMapping(RestEndpoints.REGISTER)
@@ -79,4 +87,26 @@ public class AuthController {
         authService.forgotPassword(email);
         return ResponseEntity.ok().body("reset password link has been sent to your email");
     }
+
+    @PostMapping("/oauth2/register/confirm-password")
+    public ResponseEntity<?> OAuth2Register(@ModelAttribute OAuth2UserRegisterRequest registerRequest,
+                                            HttpServletRequest req,
+                                            HttpServletResponse res
+    ){
+        log.debug("inside post call");
+        log.info(String.valueOf(registerRequest));
+        if (registerRequest != null) {
+            UserRegisterRequest userRegisterRequest = mapper.map(registerRequest, UserRegisterRequest.class);
+            try {
+                authService.registerUser(userRegisterRequest);
+            } catch (SQLException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while registering the user");
+            }
+            log.debug(userRegisterRequest.toString());
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid registration request");
+        }
+        return ResponseEntity.ok().body("user has been registered");
+    }
+
 }
