@@ -27,10 +27,8 @@ spring:
       client:
         registration:
           google:
-#            client-id: 510095165481-382ece7lvck30beqc5624vrt5922rju6.apps.googleusercontent.com
             client-id: ${CLIENT_ID}
 
-#            client-secret: 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
             client-secret: ${CLIENT_SECRET}
   mail:
     password: skf2
