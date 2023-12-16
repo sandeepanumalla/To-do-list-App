@@ -2,6 +2,7 @@ package com.example.config;
 
 import com.example.exceptions.JwtAuthenticationException;
 import com.example.filters.JwtAuthorizationFilter;
+
 import com.example.request.OAuth2UserRegisterRequest;
 import jakarta.servlet.http.HttpSession;
 import org.modelmapper.ModelMapper;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,6 +42,8 @@ public class SecurityConfig {
 
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
 
+//    private final OAuth2RedirectionFilter oAuth2RedirectionFilter;
+
     private final JwtAuthenticationException jwtAuthenticationException;
 
     @Autowired
@@ -58,6 +62,7 @@ public class SecurityConfig {
                     authorize.requestMatchers(allowedUrls).permitAll()
                             .anyRequest().authenticated();
                 })
+//                .addFilterBefore(oAuth2RedirectionFilter, BasicAuthenticationFilter.class)
                 .oauth2Login(auth -> auth.loginPage("/oauth2/authorization/google").defaultSuccessUrl("/home").successHandler(jwtAuthenticationSuccessHandler()))
                 .exceptionHandling(exceptionHandling -> {
                     exceptionHandling.authenticationEntryPoint(jwtAuthenticationException);
@@ -87,6 +92,8 @@ public class SecurityConfig {
             response.sendRedirect("/oauth2/register/password");
         });
     }
+
+
 
 
     @Bean

@@ -49,8 +49,14 @@ public class ThymeleafController {
 
         @GetMapping("/register")
         @Operation(summary = "Render the registration form for OAuth2", description = "Displays the registration form for OAuth2 users.")
-
         public String registerFormForOAuth2(HttpServletRequest request, HttpServletResponse response) {
+            request.getSession().setAttribute("OAuth2_Request_Type", "REGISTER");
+            return "redirect:/oauth2/authorization/google";
+        }
+
+    @GetMapping("/sign-in")
+    public String signinRequest(HttpServletRequest request, HttpServletResponse response) {
+        request.getSession().setAttribute("OAuth2_Request_Type", "REGISTER");
         return "redirect:/oauth2/authorization/google";
     }
 }

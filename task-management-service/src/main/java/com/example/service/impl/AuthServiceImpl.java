@@ -77,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
         if(checkAuthentication(userSignInRequest.getEmailOrUsername())) {
             return "you are already signed in";
         }
+
         String emailOrUsername = userSignInRequest.getEmailOrUsername();
         setAuthentication(emailOrUsername, userSignInRequest.getPassword());
         System.out.println("received the request"+userSignInRequest.toString());
