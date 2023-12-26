@@ -27,9 +27,7 @@ spring:
       client:
         registration:
           google:
-            client-id: ${CLIENT_ID}
 
-            client-secret: ${CLIENT_SECRET}
   mail:
     password: skf2
     username: sandeepgfgjava@gmail.com
@@ -47,7 +45,19 @@ logging:
   level:
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
+    org.springframework.amqp: DEBUG
 
+
+
+rabbitmq:
+  queue:
+    name: task-queue
+
+  exchange:
+    name: task-notifications-exchange
+
+  routing:
+    key: task-notifications-routing-key
 
 #  server.port=8080
 #  spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver

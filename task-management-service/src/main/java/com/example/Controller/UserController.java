@@ -5,7 +5,7 @@ import com.example.model.Category;
 import com.example.model.TaskStatus;
 import com.example.repository.TaskRepository;
 import com.example.response.TaskResponse;
-import com.example.service.SharedTaskService;
+import com.example.service.TaskSharingService;
 import com.example.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,11 +26,11 @@ public class UserController {
     private final UserService userService;
     private final TaskRepository taskRepository;
 
-    private final SharedTaskService sharedTaskService;
+    private final TaskSharingService sharedTaskService;
 
     @Autowired
     public UserController(UserService userService,
-                          TaskRepository taskRepository, SharedTaskService sharedTaskService) {
+                          TaskRepository taskRepository, TaskSharingService sharedTaskService) {
         this.userService = userService;
         this.taskRepository = taskRepository;
         this.sharedTaskService = sharedTaskService;

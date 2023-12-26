@@ -1,10 +1,13 @@
 package com.example.Controller;
 
 import com.example.config.RestEndpoints;
+import com.example.model.AuthenticationType;
 import com.example.request.OAuth2UserRegisterRequest;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
+import com.example.response.UserWelcomeResponse;
 import com.example.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,17 +47,17 @@ public class AuthController {
 
     @PostMapping(RestEndpoints.SIGN_IN)
     public ResponseEntity<?> signIn(@RequestBody @Valid UserSignInRequest userSignInRequest, HttpServletRequest request, HttpServletResponse response) {
-        String token = authService.signIn(userSignInRequest);
-        Cookie cookie = new Cookie("jwt", token);
-        cookie.setMaxAge(3600);
-        cookie.setPath("/");
-//        cookie.setDomain("localhost");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        UserWelcomeResponse userWelcomeResponse = null;
+        return signInResponseEntity(response, userSignInRequest);
+    }
+
+    private void setCookie(HttpServletResponse response, String cookieName, String cookieValue, int maxAge, String path, boolean httpOnly, boolean secure) {
+        Cookie cookie = new Cookie(cookieName, cookieValue);
+        cookie.setMaxAge(maxAge);
+        cookie.setPath(path);
+        cookie.setHttpOnly(httpOnly);
+        cookie.setSecure(secure);
         response.addCookie(cookie);
-        String message = String.format("Hey %s, welcome back!",userSignInRequest.getEmailOrUsername());
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(message);
-//        return ResponseEntity.ok().body("Welcome, " + userSignInRequest.getEmailOrUsername() + ", "+ token);
     }
 
     @GetMapping(RestEndpoints.FORGOT_PASSWORD)
@@ -110,6 +113,29 @@ public class AuthController {
     }
 
 
+    @GetMapping("/oauth2/sign-in")
+    @Operation(hidden = true)
+    public ResponseEntity<String> Oauth2SignIn(HttpServletRequest request, HttpServletResponse response) {
+        HttpSession session =  request.getSession();
+        OAuth2UserRegisterRequest oAuth2UserRegisterRequest = (OAuth2UserRegisterRequest) session.getAttribute("registrationForm");
+        UserSignInRequest userSignInRequest = mapper.map(oAuth2UserRegisterRequest, UserSignInRequest.class);
+        userSignInRequest.setEmailOrUsername(oAuth2UserRegisterRequest.getEmail());
+        userSignInRequest.setAuthenticationType(AuthenticationType.OAUTH2);
+        UserWelcomeResponse userWelcomeResponse;
+        return signInResponseEntity(response, userSignInRequest);
+    }
+
+    private ResponseEntity<String> signInResponseEntity(HttpServletResponse response, UserSignInRequest userSignInRequest) {
+        UserWelcomeResponse userWelcomeResponse;
+        try {
+            userWelcomeResponse = authService.signIn(userSignInRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        setCookie(response, "jwt", userWelcomeResponse.getToken(), 3600, "/", true, false);
+        String message = String.format("Hey %s, welcome back!", userWelcomeResponse.getFirstName());
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(message);
+    }
 
 
 }

@@ -1,11 +1,9 @@
 package com.example.service;
 
-import com.example.model.Task;
-import com.example.model.User;
 import com.example.request.TaskShareRequest;
 import com.example.request.TaskUnShareRequest;
 
-public interface SharedTaskService {
+public interface TaskSharingService {
 
     public void share(TaskShareRequest taskShareRequest);
 

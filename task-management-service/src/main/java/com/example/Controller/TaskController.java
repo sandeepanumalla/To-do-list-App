@@ -6,7 +6,7 @@ import com.example.request.*;
 import com.example.response.ReminderResponse;
 import com.example.response.TaskResponse;
 import com.example.service.ReminderService;
-import com.example.service.SharedTaskService;
+import com.example.service.TaskSharingService;
 import com.example.service.TaskService;
 import com.example.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -25,11 +26,11 @@ public class TaskController {
     private final UserService userService;
     private final ReminderService reminderService;
 
-    private final SharedTaskService sharedTaskService;
+    private final TaskSharingService sharedTaskService;
 
 
     @Autowired
-    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, SharedTaskService sharedTaskService) {
+    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, TaskSharingService sharedTaskService) {
         this.taskService = taskService;
         this.userService = userService;
         this.reminderService = reminderService;
@@ -95,7 +96,9 @@ public class TaskController {
     public ResponseEntity<?> getReminders(@PathVariable("taskId") Long taskId, HttpServletRequest request) {
         User user  = userService.getUserIdByToken(request);
         List<ReminderResponse> reminders = reminderService.getReminders(taskId, user.getUserId());
+        reminders.stream().filter(reminder -> reminder.getId() != 2).mapToLong(( ReminderResponse::getId));
         return ResponseEntity.ok().body(reminders);
+
     }
 
     @DeleteMapping(RestEndpoints.DELETE_REMINDER)
@@ -126,6 +129,5 @@ public class TaskController {
 
         return ResponseEntity.ok("Task has been unshared with selected users.");
     }
-
 
 }

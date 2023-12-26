@@ -13,10 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-@WebFilter(
-        filterName = "OAuth2RedirectionFilter",
-        urlPatterns = {"/oauth2/sign-in", "/oauth2/register", "/oauth2/authorization/google"}
-)
+//@Component
 @Slf4j
 public class OAuth2RedirectionFilter extends HttpFilter {
 

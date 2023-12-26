@@ -19,7 +19,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,8 +40,6 @@ public class SecurityConfig {
     };
 
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
-
-//    private final OAuth2RedirectionFilter oAuth2RedirectionFilter;
 
     private final JwtAuthenticationException jwtAuthenticationException;
 
@@ -82,6 +79,14 @@ public class SecurityConfig {
             if(firstName != null) {
                 firstName = firstName.split(" ")[0];
             }
+            String requestType = (String) request.getSession().getAttribute("OAuth2_Request_Type");
+            String redirectUrl = null;
+            if(requestType != null && requestType.equals("register")) {
+                redirectUrl = "/oauth2/register/password";
+            } else if (requestType != null && requestType.equals("sign-in")) {
+                redirectUrl = RestEndpoints.AUTH + "/oauth2/sign-in";
+            }
+
             OAuth2UserRegisterRequest oAuth2UserRegisterRequest = OAuth2UserRegisterRequest.builder()
                     .email(email)
                     .firstName(firstName)
@@ -89,9 +94,10 @@ public class SecurityConfig {
                     .build();
             HttpSession session = request.getSession();
             session.setAttribute("registrationForm", oAuth2UserRegisterRequest);
-            response.sendRedirect("/oauth2/register/password");
+            response.sendRedirect(redirectUrl);
         });
     }
+
 
 
 

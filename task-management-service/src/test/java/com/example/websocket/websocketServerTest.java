@@ -20,6 +20,6 @@ public class websocketServerTest {
 
     @Test
     public void testWebSocketServer() {
-        simpMessagingTemplate.convertAndSend("/topic/notifications", "test");
+        simpMessagingTemplate.convertAndSend("/app/topic/notifications", "test");
     }
 }

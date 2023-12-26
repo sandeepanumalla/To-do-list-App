@@ -53,6 +53,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         for(String allowedPath: allowedUrls) {
             if(path.matches(allowedPath)) {
+                logger.info("allowing the url " + path);
                 return true;
             }
         }
@@ -63,7 +64,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
         logger.info("inside do Filter method");
-
+        if(shouldNotFilter(request)) {
+            filterChain.doFilter(request, response);
+        }
         if(request.getRequestURL().toString().equals("http://localhost:8081/task-management-sockets")) {
 
         }

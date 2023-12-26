@@ -1,5 +1,6 @@
 package com.example.service.impl;
 
+import com.example.model.AuthenticationType;
 import com.example.model.PasswordToken;
 import com.example.model.User;
 import com.example.repository.ResetPasswordRepository;
@@ -7,6 +8,7 @@ import com.example.repository.SignupTypeRepository;
 import com.example.repository.UserRepository;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
+import com.example.response.UserWelcomeResponse;
 import com.example.service.AuthService;
 import com.example.service.MailService;
 import com.example.service.ResetPasswordTokenService;
@@ -73,23 +75,40 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String signIn(UserSignInRequest userSignInRequest) {
+    public UserWelcomeResponse signIn(UserSignInRequest userSignInRequest) throws Exception {
         if(checkAuthentication(userSignInRequest.getEmailOrUsername())) {
-            return "you are already signed in";
+            throw new Exception("you are already signed in");
         }
-
         String emailOrUsername = userSignInRequest.getEmailOrUsername();
-        setAuthentication(emailOrUsername, userSignInRequest.getPassword());
+        Authentication userDetails;
+        AuthenticationType authenticationType = userSignInRequest.getAuthenticationType();
+        if( authenticationType != null && authenticationType.equals(AuthenticationType.OAUTH2)) {
+            userDetails = setOAuth2Authentication(emailOrUsername, userSignInRequest.getPassword());
+        } else {
+            userDetails = setAuthentication(emailOrUsername, userSignInRequest.getPassword());
+        }
         System.out.println("received the request"+userSignInRequest.toString());
         String token = jwtService.generateToken(emailOrUsername);
-        System.out.println("is validated " + validator.toString());
-        return token;
+        return UserWelcomeResponse.builder()
+                .token(token)
+                .firstName(userDetails.getName())
+//                .email(userDetails.getDetails()
+                .build();
     }
 
-    public void setAuthentication(String username, String password) {
+    public Authentication setAuthentication(String username, String password) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
         Authentication authenticated = customAuthenticationProvider.authenticate(authentication);
         SecurityContextHolder.getContext().setAuthentication(authenticated);
+        return authentication;
+    }
+
+
+    public Authentication setOAuth2Authentication(String username, String password) {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authenticated = customAuthenticationProvider.authenticateForOAuth2(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authenticated);
+        return authenticated;
     }
 
     private boolean checkAuthentication(String username) {

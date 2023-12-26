@@ -29,6 +29,8 @@ public class WebSocketsAuthenticationInterceptor implements ChannelInterceptor {
     }
 
     private boolean checkAuthentication(Message<?> message, MessageChannel channel) {
-        return false;
+        log.info("checking authentication" + message);
+        log.info("checking channel " + channel);
+        return true;
     }
 }

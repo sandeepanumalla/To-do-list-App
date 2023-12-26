@@ -1,6 +1,7 @@
 package com.example.request;
 
 import com.example.annotations.ValidEmailOrUsername;
+import com.example.model.AuthenticationType;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -28,6 +29,8 @@ public class UserSignInRequest {
 
     @NotEmpty(message = "please provide password")
     String password;
+
+    AuthenticationType authenticationType;
 }
 
 

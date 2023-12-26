@@ -1,14 +1,16 @@
 package com.example.service;
 
+import com.example.model.User;
 import com.example.request.UserRegisterRequest;
 import com.example.request.UserSignInRequest;
+import com.example.response.UserWelcomeResponse;
 import org.springframework.web.util.UriComponents;
 
 import java.sql.SQLException;
 
 public interface AuthService {
 
-    public String signIn(UserSignInRequest userSignInRequest);
+    public UserWelcomeResponse signIn(UserSignInRequest userSignInRequest) throws Exception;
 
     public void signOut(String token);
 

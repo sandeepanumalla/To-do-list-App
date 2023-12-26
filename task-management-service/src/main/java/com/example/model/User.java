@@ -60,7 +60,7 @@ public class User implements UserDetails, Serializable {
     private List<UserNotificationPreferences> notificationPreferences;
 
     @OneToMany(mappedBy = "user")
-    private List<UserNotifications> userNotifications;
+    private List<UserNotification> userNotifications;
 
 //    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
 //    @JoinColumn(name = "signup_type_id", nullable = false)

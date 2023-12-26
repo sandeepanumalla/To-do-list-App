@@ -72,6 +72,14 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             List<GrantedAuthority> authorityList = new ArrayList<>();
             authorityList.add(new SimpleGrantedAuthority("default"));
             return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(), authorityList);
-        } else throw new BadCredentialsException("invalid credentails");
+        } else throw new BadCredentialsException("Invalid Credentials");
+    }
+
+    public Authentication authenticateForOAuth2(Authentication authentication) {
+        String username = authentication.getName();
+//        String password = authentication.getCredentials().toString();
+        User userDetails = emailOrUsernameLookUp(username);
+//        return checkPassword(password, userDetails);
+        return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword());
     }
 }

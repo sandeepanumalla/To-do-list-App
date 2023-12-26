@@ -45,7 +45,6 @@ public class TaskServiceImpl implements TaskService {
         this.taskRepository = taskRepository;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
-
         this.categoryRepository = categoryRepository;
     }
 
