@@ -1,6 +1,7 @@
 package com.example.service.factory;
 
 public class NotificationFactoryProvider {
+
     public static NotificationFactory getFactory(NotificationType notificationType) {
         return switch(notificationType) {
             case COMMENT -> null;

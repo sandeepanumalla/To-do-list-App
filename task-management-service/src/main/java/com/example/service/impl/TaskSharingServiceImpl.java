@@ -67,10 +67,14 @@ public class TaskSharingServiceImpl implements TaskSharingService {
         taskShareValidator.validateShareRequest(taskShareRequest);
         taskShareExecutor.executeShareTask(taskShareRequest);
         Optional<Task> task = taskRepository.findById(taskShareRequest.getTaskId());
-        String recipientUsername = userRepository.findById(taskShareRequest.getUserSet().stream().toList().get(0)).get().getUsername();
+//        String recipientUsername = userRepository.findById(taskShareRequest.getUserSet().stream().toList().get(0)).get().getUsername();
         String message = String.format("Task with title %s has been shared with you", task
                 .orElseThrow(() -> new IllegalArgumentException("Task Not found")).getTitle());
-        notificationService.sendNotification(recipientUsername, message, NotificationType.TASK_SHARED);
+        List<String> recipients = taskShareRequest.getUserSet().stream()
+                .map(userId -> userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException(String.format("User Id with %d is not a Task Master user", userId))).getUsername())
+                .toList();
+        recipients.forEach(recipient -> notificationService.sendNotification(recipient, message, NotificationType.TASK_SHARED));
+
 //        long taskId = taskShareRequest.getTaskId();
 //        List<Long> newTaskMemberIds = taskShareRequest.getUserSet().stream().toList();
 //        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NoSuchElementException("Task doesn't exist"));

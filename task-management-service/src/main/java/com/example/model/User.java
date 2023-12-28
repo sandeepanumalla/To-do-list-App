@@ -15,7 +15,8 @@ import java.util.Set;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 @Table(name = "user")
 public class User implements UserDetails, Serializable {
@@ -42,12 +43,14 @@ public class User implements UserDetails, Serializable {
     @OneToMany(mappedBy = "owner")
     private List<Task> ownTasks;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    @JoinTable(
-            name = "shared_tasks",
-            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "userId"),
-            inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id")
-    )    private Set<Task> sharedTasks;
+    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "sharedWithUsers", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinTable(
+//            name = "shared_tasks",
+//            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "userId"),
+//            inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id")
+//    )
+    private List<Task> sharedTasks;
+
 
     @OneToOne(mappedBy = "userId")
     private Profile profile;

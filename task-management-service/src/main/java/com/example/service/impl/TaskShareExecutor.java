@@ -6,9 +6,11 @@ import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.request.TaskShareRequest;
 import com.example.request.TaskUnShareRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,6 +35,7 @@ public class TaskShareExecutor {
     }
 
 
+    @Transactional
     public void executeShareTask(TaskShareRequest taskShareRequest) {
         long taskId = taskShareRequest.getTaskId();
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NoSuchElementException(TASK_NOT_FOUND_ERROR));
@@ -45,6 +48,7 @@ public class TaskShareExecutor {
                 .collect(Collectors.toSet());
 
         task.getSharedWithUsers().addAll(newTaskMembers);
+        taskRepository.save(task);
         log.info("task has been shared");
     }
 
@@ -54,13 +58,8 @@ public class TaskShareExecutor {
         List<Long> unShareUserIds = taskUnShareRequest.getUserToBeUnshared().stream().toList();
         List<User> unShareableUsers = userRepository.findAllById(unShareUserIds);
         Task task = taskRepository.findSharedWithUsersByTaskId(taskId).orElseThrow(() -> new NoSuchElementException("Task doesn't exist"));
-        removeSharedUsers(task, unShareableUsers);
+        task.getSharedWithUsers().removeAll(unShareableUsers);
+        taskRepository.saveAndFlush(task);
     }
 
-    private void removeSharedUsers(Task task, List<User> unShareableUsers) {
-        for (User user : unShareableUsers) {
-            user.getSharedTasks().removeIf(sharedTask -> sharedTask.getId().equals(task.getId()));
-            userRepository.save(user);
-        }
-    }
 }
