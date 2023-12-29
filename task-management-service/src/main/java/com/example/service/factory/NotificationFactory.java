@@ -6,5 +6,5 @@ import com.example.response.NotificationDTO;
 
 public interface NotificationFactory {
     UserNotification createNotifications(String message);
-    NotificationDTO createNotificationDTO(NotificationType notificationType ,String message, String recipientUsername);
+    NotificationDTO createNotificationDTO(String message, String recipientUsername);
 }

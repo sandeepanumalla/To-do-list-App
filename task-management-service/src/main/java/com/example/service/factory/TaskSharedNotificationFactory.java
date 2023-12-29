@@ -16,15 +16,10 @@ public class TaskSharedNotificationFactory implements NotificationFactory {
     }
 
     @Override
-    public NotificationDTO createNotificationDTO(NotificationType notificationType ,String message, String recipientUsername) {
-        Map<NotificationType, String> titles = Map.of(
-                NotificationType.TASK_SHARED, "task has been shared",
-                NotificationType.TASK_UNSHARED, "task has been unshared",
-                NotificationType.FILE_UPLOAD, "file has been uploaded",
-                NotificationType.COMMENT, "someone commented"
-        );
+    public NotificationDTO createNotificationDTO(String message, String recipientUsername) {
+
         return NotificationDTO.builder()
-                .title(titles.get(notificationType))
+                .title("task has been shared")
                 .recipientUsername(recipientUsername)
                 .message(message)
                 .build();

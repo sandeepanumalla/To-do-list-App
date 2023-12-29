@@ -116,7 +116,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserIdByToken(HttpServletRequest httpServletRequest) {
         String jwtToken = (String) httpServletRequest.getAttribute("jwtToken");
-        String username = jwtService.extractUsername(jwtToken);
+        return getUser(jwtToken);
+    }
+
+    @Override
+    public User getUserIdByToken(String token) {
+        return getUser(token);
+    }
+
+    @Override
+    public List<Task> getSharedTasks(String token) {
+        return getUser(token).getSharedTasks();
+    }
+
+    private User getUser(String token) {
+        String username = jwtService.extractUsername(token);
         Optional<User> user = userRepository.findUserByUsername(username);
         if(user.isEmpty()) {
             log.error("user is not found: {} ", user);

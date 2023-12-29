@@ -2,12 +2,14 @@ package com.example.Controller;
 
 import com.example.config.RestEndpoints;
 import com.example.model.Category;
+import com.example.model.Task;
 import com.example.model.TaskStatus;
 import com.example.repository.TaskRepository;
 import com.example.response.TaskResponse;
 import com.example.service.TaskSharingService;
 import com.example.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,47 +28,79 @@ public class UserController {
     private final TaskRepository taskRepository;
 
     private final TaskSharingService sharedTaskService;
+    private final ModelMapper modelMapper;
 
     @Autowired
     public UserController(UserService userService,
-                          TaskRepository taskRepository, TaskSharingService sharedTaskService) {
+                          TaskRepository taskRepository, TaskSharingService sharedTaskService,
+                          ModelMapper modelMapper) {
         this.userService = userService;
         this.taskRepository = taskRepository;
         this.sharedTaskService = sharedTaskService;
+        this.modelMapper = modelMapper;
     }
 
-    @GetMapping( RestEndpoints.GET_TASK_FOR_AUTHENTICATED_USER)
-    public ResponseEntity<?> getAllTasksForUser(HttpServletRequest request,
-                                                @RequestParam(name = "sortBy", defaultValue = "title") String sortBy,
-                                                @RequestParam(name = "pageNum", defaultValue = "0") Integer pageNum,
-                                                @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
-                                                @RequestParam(name = "status", required = false) List<String> taskStatuses,
-                                                @RequestParam(name = "category", required = false) List<String> categories
-                                                ) {
+    @GetMapping(RestEndpoints.GET_TASK_FOR_AUTHENTICATED_USER)
+    public ResponseEntity<?> getAllTasksForUser(
+            @CookieValue("jwt") String token,
+            HttpServletRequest request,
+            @RequestParam(name = "sortBy", defaultValue = "title") String sortBy,
+            @RequestParam(name = "pageNum", defaultValue = "0") Integer pageNum,
+            @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
+            @RequestParam(name = "status", required = false) List<String> taskStatuses,
+            @RequestParam(name = "category", required = false) List<String> categories,
+            @RequestParam(name = "sharedTask", defaultValue = "false") boolean sharedTask
+    ) {
+        long userId = getUserIdFromRequest(request);
+        Pageable pageable = createPageable(sortBy, pageNum, pageSize);
+        List<TaskStatus> statusFilters = getStatusFilters(taskStatuses);
+        List<Category> categoryFilters = getCategoryFilters(categories);
 
-        List<TaskStatus> statusEnums = taskStatuses != null ?
-                taskStatuses.stream().map(String::toUpperCase).map(TaskStatus::valueOf).collect(Collectors.toList())
-                        : Collections.emptyList();
+        if (areFiltersEmpty(statusFilters, categoryFilters)) {
+            return ResponseEntity.ok().body(userService.getAllTasks(userId, pageable));
+        } else {
 
-        List<Category> categoryList = categories != null ?
-                categories.stream().map(String::toUpperCase).map(Category::valueOf).toList() :
-                        Collections.emptyList();
-        List<TaskResponse> taskResponseList = null;
-        try {
-            Pageable sortByGivenColumn = PageRequest.of(pageNum, pageSize, Sort.by(sortBy));
-            long userId = userService.getUserIdByToken(request).getUserId();
-            if(statusEnums.isEmpty() && categoryList.isEmpty()) {
-                taskResponseList = userService.getAllTasks(userId, sortByGivenColumn);
-            } else {
-                taskResponseList = userService.getAllTasksWithFiltersApplied(userId, statusEnums, categoryList, sortByGivenColumn);
-            }
-            return ResponseEntity.ok().body(taskResponseList);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid sortBy value " + sortBy);
+            Map<String, List<TaskResponse>> taskMap = new HashMap<>();
+
+            List<TaskResponse> sharedTasksResponse = userService.getSharedTasks(token)
+                    .stream()
+                    .map(task -> modelMapper.map(task, TaskResponse.class))
+                    .collect(Collectors.toList());
+
+            List<TaskResponse> unsharedTasksResponse = userService.getAllTasksWithFiltersApplied(
+                    userId, statusFilters, categoryFilters, pageable);
+
+            taskMap.put("Shared", sharedTasksResponse);
+            taskMap.put("Unshared", unsharedTasksResponse);
+
+            return ResponseEntity.ok().body(
+                    taskMap
+            );
         }
     }
 
+    private boolean areFiltersEmpty(List<TaskStatus> statusFilters, List<Category> categoryFilters) {
+        return statusFilters.isEmpty() && categoryFilters.isEmpty();
+    }
 
+    private long getUserIdFromRequest(HttpServletRequest request) {
+        return userService.getUserIdByToken(request).getUserId();
+    }
 
+    private Pageable createPageable(String sortBy, Integer pageNum, Integer pageSize) {
+        Sort sort = Sort.by(sortBy);
+        return PageRequest.of(pageNum, pageSize, sort);
+    }
 
+    private List<TaskStatus> getStatusFilters(List<String> taskStatuses) {
+        return taskStatuses != null
+                ? taskStatuses.stream().map(String::toUpperCase).map(TaskStatus::valueOf).collect(Collectors.toList())
+                : Collections.emptyList();
+    }
+
+    private List<Category> getCategoryFilters(List<String> categories) {
+        return categories != null
+                ? categories.stream().map(String::toUpperCase).map(Category::valueOf).toList()
+                : Collections.emptyList();
+    }
 }

@@ -19,7 +19,7 @@ public final class RestEndpoints {
     public static final String TASKS = "/api/tasks";
     public static final String CREATE_TASK = ""; // Assuming POST method is used
     public static final String GET_TASK_FOR_AUTHENTICATED_USER = "/tasks";
-    public static final String GET_TASK_BY_TASKID = "/{taskId}";
+    public static final String GET_TASK_BY_TASK_ID = "/{taskId}";
     public static final String UPDATE_TASK = "/{taskId}";
     public static final String DELETE_TASK = "/{taskId}";
 
@@ -27,8 +27,8 @@ public final class RestEndpoints {
     public static final String GET_REMINDERS = "/{taskId}/reminder";
     public static final String UPDATE_REMINDER = "/{taskId}/reminder";
     public static final String DELETE_REMINDER = "/{taskId}/reminders/{reminderId}";
-    public static final String SHARE_THE_TASK = "/{taskId}/share";
 
+    public static final String SHARE_THE_TASK = "/{taskId}/share";
     public static final String UNSHARE_THE_TASK = "/{taskId}/unshare";
     public static final String ASSIGN_TASK_TO_USER = "/{taskId}/assign";
 

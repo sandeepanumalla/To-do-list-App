@@ -25,7 +25,6 @@ public class TaskController {
     private final TaskService taskService;
     private final UserService userService;
     private final ReminderService reminderService;
-
     private final TaskSharingService sharedTaskService;
 
 
@@ -57,7 +56,7 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskResponse);
     }
 
-    @GetMapping(RestEndpoints.GET_TASK_BY_TASKID)
+    @GetMapping(RestEndpoints.GET_TASK_BY_TASK_ID)
     public ResponseEntity<?> getTaskById(@PathVariable(name = "taskId") long taskId) {
         TaskResponse taskResponse= taskService.getTaskById(taskId);
         return ResponseEntity.status(HttpStatus.OK).body(taskResponse);
@@ -109,8 +108,10 @@ public class TaskController {
     }
 
     @PutMapping(RestEndpoints.SHARE_THE_TASK)
-    public ResponseEntity<?> shareTheTask(@PathVariable("taskId") Long taskId,@Valid @RequestBody TaskShareRequest taskShareRequest,
+    public ResponseEntity<?> shareTheTask(@CookieValue("jwt") String CookieValue, @PathVariable("taskId") Long taskId,@Valid @RequestBody TaskShareRequest taskShareRequest,
                                           HttpServletRequest request) {
+        System.out.println("cookie " + CookieValue);
+        System.out.println(userService.getUserIdByToken(CookieValue).getUsername());
         User owner = userService.getUserIdByToken(request);
         taskShareRequest.setTaskId(taskId);
         taskShareRequest.setTaskOwner(owner);
@@ -129,5 +130,8 @@ public class TaskController {
 
         return ResponseEntity.ok("Task has been unshared with selected users.");
     }
+
+
+
 
 }

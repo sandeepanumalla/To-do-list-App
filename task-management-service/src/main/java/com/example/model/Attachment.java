@@ -1,15 +1,13 @@
 package com.example.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 @Table(name = "attachments")
 public class Attachment {
@@ -22,7 +20,7 @@ public class Attachment {
     private String fileName;
 
     @Column(nullable = false)
-    private String fileType;
+    private String mediaType;
 
     @Lob
     private byte[] data;

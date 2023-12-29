@@ -1,9 +1,9 @@
 package com.example.service;
 
+import com.example.request.AttachmentUploadRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-@Service
 public interface FileUploadService {
-    void upload(MultipartFile multipartFile);
+    void upload(AttachmentUploadRequest attachmentUploadRequest);
 }

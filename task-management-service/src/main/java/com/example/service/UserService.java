@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.model.Category;
+import com.example.model.Task;
 import com.example.model.TaskStatus;
 import com.example.model.User;
 import com.example.response.TaskResponse;
@@ -18,6 +19,8 @@ public interface UserService {
                                                             List<Category> categories,
                                                             Pageable pageable);
 
-
     User getUserIdByToken(HttpServletRequest httpServletRequest);
+    User getUserIdByToken(String token);
+
+    List<Task> getSharedTasks(String token);
 }

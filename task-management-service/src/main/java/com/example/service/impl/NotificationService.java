@@ -19,7 +19,7 @@ public class NotificationService{
 
     public void sendNotification(String recipientName, String message, NotificationType NotificationType) {
         NotificationFactory notificationFactory = NotificationFactoryProvider.getFactory(NotificationType);
-        NotificationDTO notificationDTO =  notificationFactory.createNotificationDTO(NotificationType , message, recipientName);
+        NotificationDTO notificationDTO =  notificationFactory.createNotificationDTO( message, recipientName);
         messageBroker.sendNotification(notificationDTO, recipientName);
     }
 }
