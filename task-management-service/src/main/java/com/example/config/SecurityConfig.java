@@ -56,8 +56,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests((authorize) -> {
-                    authorize.requestMatchers(allowedUrls).permitAll()
-                            .anyRequest().authenticated();
+                    authorize
+//                            .requestMatchers(allowedUrls).permitAll()
+                            .anyRequest().permitAll();
                 })
 //                .addFilterBefore(oAuth2RedirectionFilter, BasicAuthenticationFilter.class)
                 .oauth2Login(auth -> auth.loginPage("/oauth2/authorization/google").defaultSuccessUrl("/home").successHandler(jwtAuthenticationSuccessHandler()))

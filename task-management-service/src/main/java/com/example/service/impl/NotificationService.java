@@ -21,5 +21,6 @@ public class NotificationService{
         NotificationFactory notificationFactory = NotificationFactoryProvider.getFactory(NotificationType);
         NotificationDTO notificationDTO =  notificationFactory.createNotificationDTO( message, recipientName);
         messageBroker.sendNotification(notificationDTO, recipientName);
+
     }
 }

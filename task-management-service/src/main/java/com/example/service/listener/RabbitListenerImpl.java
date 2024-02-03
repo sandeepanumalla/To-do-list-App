@@ -25,25 +25,28 @@ public class RabbitListenerImpl {
     }
 
 
-    @RabbitListener(queues = {"${rabbitmq.queue.name}"}, autoStartup = "true")
-    public void receiveMessage(String message) {
-        logger.info(String.format("Received message at %s", System.currentTimeMillis()));
-        logger.info(String.format("Received message from RabbitMQ consumer: %s", message));
-        NotificationDTO notificationDTO = null;
-        try {
-            notificationDTO = objectMapper.readValue(message, NotificationDTO.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        String dynamicTopic = "/topic/notifications/" + notificationDTO.getRecipientUsername();
-        try {
-            messageTemplate.convertAndSend(dynamicTopic, message);
-            logger.info(String.format("message sent to ws consumer " + dynamicTopic));
-        } catch (Exception e) {
-            logger.error("Error sending message: " + e.getMessage(), e);
-        }
+//        @RabbitListener(queues = {"${rabbitmq.queue.name}"})
+        public void receiveMessage(String message) {
+            logger.info(String.format("Received message at %s", System.currentTimeMillis()));
+            logger.info(String.format("Received message from RabbitMQ consumer: %s", message));
+            NotificationDTO notificationDTO ;
+            String notificationType;
+            try {
+                notificationDTO = objectMapper.readValue(message, NotificationDTO.class);
+               notificationType = notificationDTO.getNotificationType().toString();
 
-        // send or public the message to websocket
-//        messageTemplate.convertAndSend("/topic/notifications/" + notificationDTO.getRecipientUsername());
-    }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            String dynamicTopic = "/topic/" +notificationType +"/" + notificationDTO.getRecipientUsername();
+            try {
+                messageTemplate.convertAndSend(dynamicTopic, message);
+                logger.info(String.format("message sent to ws consumer " + dynamicTopic));
+            } catch (Exception e) {
+                logger.error("Error sending message: " + e.getMessage(), e);
+            }
+
+            // send or public the message to websocket
+    //        messageTemplate.convertAndSend("/topic/notifications/" + notificationDTO.getRecipientUsername());
+        }
 }

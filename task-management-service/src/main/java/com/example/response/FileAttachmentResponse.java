@@ -10,6 +10,9 @@ import org.springframework.http.MediaType;
 @Setter
 @Builder
 public class FileAttachmentResponse {
+
+    private String fileName;
+
     private byte[] fileBytes;
 
     private ByteArrayResource byteArrayResource;

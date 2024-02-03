@@ -28,7 +28,7 @@ public class MailServiceImpl implements com.example.service.MailService  {
 
     @Override
     public void send(String toEmail, String subject, String body) {
-
+        // this task must be a RabbitListener
         simpleMailMessage.setTo(toEmail);
         simpleMailMessage.setText(body);
         simpleMailMessage.setSubject(subject);

@@ -3,14 +3,13 @@ package com.example.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import lombok.Data;
-import lombok.Builder;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 @Entity
-@Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "reminders")

@@ -1,7 +1,7 @@
 package com.example.Controller;
 
 import com.example.config.RestEndpoints;
-import com.example.model.User;
+import com.example.model.*;
 import com.example.request.*;
 import com.example.response.ReminderResponse;
 import com.example.response.TaskResponse;
@@ -11,7 +11,11 @@ import com.example.service.TaskService;
 import com.example.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,20 +24,23 @@ import java.util.List;
 
 @RestController
 @RequestMapping(RestEndpoints.TASKS)
-public class TaskController {
+public class TaskController extends GenericUpdateController<Task, Long>{
 
     private final TaskService taskService;
     private final UserService userService;
     private final ReminderService reminderService;
     private final TaskSharingService sharedTaskService;
 
+    private final ModelMapper modelMapper;
+
 
     @Autowired
-    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, TaskSharingService sharedTaskService) {
+    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, TaskSharingService sharedTaskService, ModelMapper modelMapper) {
         this.taskService = taskService;
         this.userService = userService;
         this.reminderService = reminderService;
         this.sharedTaskService = sharedTaskService;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping(RestEndpoints.CREATE_TASK)
@@ -131,7 +138,96 @@ public class TaskController {
         return ResponseEntity.ok("Task has been unshared with selected users.");
     }
 
+    @PatchMapping("/{id}/isImportant")
+    public ResponseEntity<?> updateIsImportantField(@PathVariable Long id, @RequestBody boolean newValue) {
+        ResponseEntity<?>  response= updateField(id, "isImportant", newValue);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Task updatedTask = (Task) response.getBody();
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
 
+    @PatchMapping("/{id}/title")
+    public ResponseEntity<?> updateTitleField(@PathVariable Long id, @RequestBody String newValue) {
+        ResponseEntity<?>  response = updateField(id, "title", newValue);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Task updatedTask = (Task) response.getBody();
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
 
+    @PatchMapping("/{id}/description")
+    public ResponseEntity<?> updateDescriptionField(@PathVariable Long id, @RequestBody String newValue) {
+        ResponseEntity<?>  response = updateField(id, "description", newValue);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Task updatedTask = (Task) response.getBody();
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateTaskStatusField(@PathVariable Long id, @RequestBody TaskStatus newValue) {
+        ResponseEntity<?>  response = updateField(id, "taskStatus", newValue);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Task updatedTask = (Task) response.getBody();
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
+
+    @PatchMapping("/{id}/reminders")
+    public ResponseEntity<?> updateRemindersField(@PathVariable Long id, @RequestBody List<Reminder> newValue) {
+        ResponseEntity<?>  response = updateField(id, "reminders", newValue);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Task updatedTask = (Task) response.getBody();
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
+
+    @GetMapping // needs to change
+    public ResponseEntity<?> getAllTasksForUserA(
+            HttpServletRequest request,
+            @RequestParam(name = "sort", defaultValue = "title") String sortBy,
+            @RequestParam(name = "pageNum", defaultValue = "0", required = false) Integer pageNum,
+            @RequestParam(name = "important", defaultValue = "defaultValue", required = false) String importantParam,                                               @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
+            @RequestParam(name = "status", required = false) String taskStatus,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "shared", required = false) String sharedWithParam
+    ) {
+        Boolean important = "defaultValue".equals(importantParam) ? null : Boolean.valueOf(importantParam);
+        Boolean sharedWith = "defaultValue".equals(sharedWithParam) ? null : Boolean.valueOf(sharedWithParam);
+        long userId = userService.getUserIdByToken(request).getUserId();
+        boolean ascending = !sortBy.startsWith("-");
+        SortOption validatedSortBy = validateSortBy(sortBy);
+
+        TaskStatus status = taskStatus != null ? TaskStatus.valueOf(taskStatus.toUpperCase()) : null;
+        Pageable pageable = PageRequest.of(0, pageSize, ascending ?
+                Sort.by(Sort.Direction.ASC, validatedSortBy.getValue()) :
+                Sort.by(Sort.Direction.DESC, validatedSortBy.getValue()));
+        List<TaskResponse> taskResponses = userService.getAllTasksDup2(userId, status, important, category, sharedWith, pageable);
+        return ResponseEntity.ok(taskResponses);
+    }
+
+    private SortOption validateSortBy(String sortBy) {
+        try {
+            sortBy = sortBy.replaceAll("^[+\\-]+", "");
+            return SortOption.valueOf(sortBy.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return SortOption.TITLE; // Default sorting option
+        }
+    }
 }

@@ -63,7 +63,11 @@ public class Task implements Serializable {
     @OneToMany
     private List<Attachment> attachments;
 
-    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reminder> reminders;
+
+    public void setIsImportant(Boolean important) {
+        isImportant = important;
+    }
 
 }

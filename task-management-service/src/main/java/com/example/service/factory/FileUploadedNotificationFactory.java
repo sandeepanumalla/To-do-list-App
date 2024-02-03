@@ -9,12 +9,12 @@ import java.util.Map;
 @Service
 public class FileUploadedNotificationFactory implements NotificationFactory{
 
-    Map<NotificationType, String> titles = Map.of(
-            NotificationType.TASK_SHARED, "task has been shared",
-            NotificationType.TASK_UNSHARED, "task has been unshared",
-            NotificationType.FILE_UPLOAD, "file has been uploaded",
-            NotificationType.COMMENT, "someone commented"
-    );
+//    Map<NotificationType, String> titles = Map.of(
+//            NotificationType.TASK_SHARED, "task has been shared",
+//            NotificationType.TASK_UNSHARED, "task has been unshared",
+//            NotificationType.FILE_UPLOAD, "file has been uploaded",
+//            NotificationType.COMMENT, "someone commented"
+//    );
     @Override
     public UserNotification createNotifications(String message) {
         return null;

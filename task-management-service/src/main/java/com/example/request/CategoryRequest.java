@@ -2,14 +2,12 @@ package com.example.request;
 
 import com.example.model.User;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,5 +17,9 @@ public class CategoryRequest {
         private String categoryName;
 
         private User categoryOwner;
+
+        private long taskId;
+
+
 
 }

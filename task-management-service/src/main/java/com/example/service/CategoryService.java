@@ -41,4 +41,6 @@ public interface CategoryService {
      * @param categoryId The ID of the category to be deleted.
      */
     boolean deleteCategory(User owner, Long categoryId) throws IllegalAccessException;
+
+    void addTask(User user, long categoryId, CategoryRequest categoryRequest);
 }

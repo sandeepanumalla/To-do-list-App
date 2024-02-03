@@ -6,4 +6,8 @@ import org.springframework.stereotype.Service;
 
 public interface MessageBroker {
     void sendNotification(NotificationDTO notificationDto, String notificationType);
+
+    void sendMail();
+
+    void send();
 }

@@ -20,17 +20,20 @@ public class AttachmentFileDownloadService implements FileDownloadService {
 
     @Override
     public FileAttachmentResponse download(Object object) {
-        return fetchFromDatabase();
+        Long taskId = null;
+        return fetchFromDatabase(taskId);
     }
 
-    public FileAttachmentResponse fetchFromDatabase() {
-        Attachment attachment = attachmentRepository.findById(1L)
+    public FileAttachmentResponse fetchFromDatabase(Long taskId) {
+        Attachment attachment = attachmentRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Attachment Not Found"));
 
         byte[] bytes = attachment.getData();
+        String fileName = attachment.getFileName();
 
         return FileAttachmentResponse.builder()
                 .fileBytes(bytes)
+                .fileName(fileName)
                 .mediaType(MediaType.valueOf(attachment.getMediaType()))
                 .byteArrayResource(new ByteArrayResource(bytes))
                 .build();

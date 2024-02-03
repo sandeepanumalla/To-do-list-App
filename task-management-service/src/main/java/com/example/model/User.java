@@ -40,7 +40,7 @@ public class User implements UserDetails, Serializable {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "owner")
     private List<Task> ownTasks;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "sharedWithUsers", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})

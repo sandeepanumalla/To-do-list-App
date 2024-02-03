@@ -1,6 +1,7 @@
 package com.example.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -34,10 +35,24 @@ public class RabbitConfig {
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
 
+    @Value("${rabbitmq.queue.analytics}")
+    private String taskAnalyticsQueue;
+
+    @Value("${rabbitmq.routing.analytics.key}")
+    private String taskAnalyticsRoutingKey;
+
+
     @Bean
     public DirectExchange directExchange() {
         return new DirectExchange(exchangeName);
     }
+
+
+    @Bean
+    public Queue taskAnalyticsQueue() {
+        return new Queue(taskAnalyticsQueue);
+    }
+
 
     @Bean
     public Queue queue() {
@@ -54,6 +69,14 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Binding anotherBind(DirectExchange directExchange) {
+        return BindingBuilder
+                .bind(taskAnalyticsQueue())
+                .to(directExchange)
+                .with(taskAnalyticsRoutingKey);
+    }
+
+    @Bean
     public MessageConverter getMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -63,6 +86,15 @@ public class RabbitConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(getMessageConverter());
         return rabbitTemplate;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setPrefetchCount(10); // Set your desired prefetch count here
+        // Other configurations...
+        return factory;
     }
 
 //    @Bean

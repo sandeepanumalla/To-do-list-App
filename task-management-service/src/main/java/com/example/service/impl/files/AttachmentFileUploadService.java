@@ -9,13 +9,16 @@ import com.example.request.AttachmentUploadRequest;
 import com.example.service.FileUploadService;
 import com.example.service.factory.NotificationType;
 import com.example.service.impl.NotificationService;
-import com.example.service.impl.files.FileEmptyValidator;
-import com.example.service.impl.files.FileTypeValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class AttachmentFileUploadService implements FileUploadService {
@@ -79,6 +82,35 @@ public class AttachmentFileUploadService implements FileUploadService {
             attachmentRepository.save(attachment);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+
+
+
+    }
+
+
+    public byte[] compressBytes(byte[] data) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ZipOutputStream zipOut = new ZipOutputStream(bos)) {
+
+            // Configure ZIP compression level (0-9, 9 being highest compression)
+            zipOut.setLevel(Deflater.BEST_COMPRESSION);
+
+            // Create a ZIP entry with a specific name (e.g., "compressed_data.txt")
+            ZipEntry zipEntry = new ZipEntry("compressed_data.txt");
+            zipOut.putNextEntry(zipEntry);
+
+            // Write the compressed data to the ZIP entry
+            zipOut.write(data);
+
+            // Close the ZIP entry and the streams
+            zipOut.closeEntry();
+            zipOut.finish();
+
+            // Get the compressed data as a byte array
+            return bos.toByteArray();
+        } catch (IOException ignored) {
+            throw new RuntimeException(ignored);
         }
     }
 

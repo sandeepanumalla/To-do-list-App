@@ -4,5 +4,7 @@ public enum NotificationType {
     FILE_UPLOAD,
     COMMENT,
     TASK_SHARED,
-    TASK_UNSHARED
+    TASK_UNSHARED,
+
+    REMINDER
 }

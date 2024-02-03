@@ -1,19 +1,23 @@
 package com.example.service.impl;
 
 import com.example.model.CategoryTable;
+import com.example.model.Task;
 import com.example.model.User;
 import com.example.repository.CategoryRepository;
+import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.request.CategoryRequest;
 import com.example.response.CategoryResponse;
 import com.example.service.CategoryService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -23,11 +27,14 @@ public class CategoryServiceImpl implements CategoryService {
     private final UserRepository userRepository;
 
     private final ModelMapper modelMapper;
+    private final TaskRepository taskRepository;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, UserRepository userRepository, ModelMapper modelMapper) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, UserRepository userRepository, ModelMapper modelMapper,
+                               TaskRepository taskRepository) {
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.taskRepository = taskRepository;
     }
 
     @Override
@@ -101,6 +108,32 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (Exception e) {
             // Log the exception and rethrow a custom exception if needed
             throw new RuntimeException("Failed to delete the category", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void addTask(User user, long categoryId, CategoryRequest categoryRequest) {
+        Long taskId = categoryRequest.getTaskId();
+
+        if(taskId != null) {
+            CategoryTable categoryTable = categoryRepository.findById(categoryId).orElseThrow(() -> new IllegalStateException("Category not found"));
+            Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task with taskId not found"));
+            isUserAuthorized(user, categoryTable);
+            Set<Task> taskSet = categoryTable.getTasks();
+            taskSet.add(task);
+            categoryTable.setTasks(taskSet);
+            task.setCategory(categoryTable);
+            categoryRepository.saveAndFlush(categoryTable);
+            taskRepository.saveAndFlush(task);
+        } else {
+            throw new IllegalArgumentException("please provide a taskId to add to category");
+        }
+    }
+
+    private void isUserAuthorized(User user, CategoryTable categoryTable) {
+        if(!user.equals(categoryTable.getCategoryOwner())) {
+            throw new IllegalArgumentException("User is not authorized");
         }
     }
 }

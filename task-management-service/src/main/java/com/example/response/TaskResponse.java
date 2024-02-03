@@ -20,10 +20,10 @@ public class TaskResponse implements Serializable {
     private String title;
     private String description;
     private LocalDateTime dueDate;
-    private CategoryTable category;
+    private CategoryResponse category;
     private LocalDateTime creationDate;
     private LocalDateTime completionDate;
     private boolean isImportant = false;
     private TaskStatus taskStatus = TaskStatus.PENDING;
-    private List<Reminder> reminders;
+    private List<ReminderResponse> reminders;
 }

@@ -1,9 +1,11 @@
 package com.example.repository;
 
 import com.example.model.*;
+import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Optional;
 @Repository
-public interface TaskRepository extends PagingAndSortingRepository<Task, Long>, JpaRepository<Task, Long> {
+public interface TaskRepository extends PagingAndSortingRepository<Task, Long>, JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
     List<Task> findAllByCategory(Category category);
 
@@ -47,9 +49,26 @@ public interface TaskRepository extends PagingAndSortingRepository<Task, Long>, 
     @Query("SELECT CASE when count(t) > 0 then true else false end from Task t where t.id = :taskId and t.owner.userId IN :userIds")
     boolean isOwnerTryingToShareToHimself(@Param("taskId") Long taskId, @Param("userIds") List<Long> userIds);
 
+    Page<Task> findByOwnerUserIdAndTaskStatusAndIsImportantAndCategoryCategoryNameAndSharedWithUsersNotEmpty(
+            Long userId,
+            @Nullable TaskStatus status,
+            boolean isImportant,
+            @Nullable String categoryName,
+            Pageable pageable);
 
     @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM task_master.shared_tasks WHERE task_id = :taskId AND user_id = :userId")
     void deleteFromSharedTasks(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
+    Page<Task> findByOwnerUserIdAndTaskStatusAndIsImportant(long userId, TaskStatus status, boolean isImportant, Pageable pageable);
+
+    Page<Task> findByOwnerUserIdAndIsImportantAndCategoryCategoryName(long userId, boolean isImportant, String category, Pageable pageable);
+
+    Page<Task> findByOwnerUserIdAndTaskStatusAndCategoryCategoryName(long userId, TaskStatus status, String category, Pageable pageable);
+
+    Page<Task> findByOwnerUserIdAndTaskStatus(long userId, TaskStatus status, Pageable pageable);
+
+    Page<Task> findByOwnerUserIdAndCategoryCategoryName(long userId, String category, Pageable pageable);
+
+    Page<Task> findByOwnerUserIdAndIsImportant(long userId, Boolean isImportant, Pageable pageable);
 }

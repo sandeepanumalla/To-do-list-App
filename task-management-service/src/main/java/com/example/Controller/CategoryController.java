@@ -3,12 +3,12 @@ package com.example.Controller;
 import com.example.config.RestEndpoints;
 import com.example.model.CategoryTable;
 import com.example.model.User;
-import com.example.repository.UserRepository;
 import com.example.request.CategoryRequest;
 import com.example.response.CategoryResponse;
 import com.example.service.CategoryService;
 import com.example.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryRequest categoryRequest, HttpServletRequest request) {
+    public ResponseEntity<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest categoryRequest, HttpServletRequest request) {
         User user = userService.getUserIdByToken(request);
         categoryRequest.setCategoryOwner(user);
         CategoryResponse newCategory = categoryService.createCategory(categoryRequest);
@@ -64,14 +64,28 @@ public class CategoryController {
     }
 
     @PutMapping(RestEndpoints.UPDATE_CATEGORY)
-    public ResponseEntity<?> updateCategory(@PathVariable("categoryId") long categoryId, @RequestBody CategoryRequest categoryRequest, HttpServletRequest request) throws IllegalAccessException {
+    public ResponseEntity<?> updateCategory(@PathVariable("categoryId") long categoryId, @RequestBody @Valid CategoryRequest categoryRequest, HttpServletRequest request) throws IllegalAccessException {
         User user = userService.getUserIdByToken(request);
 
-        // Attempt to delete the category
+        // Attempt to update the category
         CategoryTable categoryTable  = categoryService.updateCategory(user, categoryId, categoryRequest);
 
         return ResponseEntity.accepted().body("category updated successfully");
     }
 
+    @PutMapping("/{categoryId}/task")
+    public ResponseEntity<?> addTaskToCategory(@PathVariable("categoryId") long categoryId, @RequestBody CategoryRequest categoryRequest, HttpServletRequest request) {
+        User user = userService.getUserIdByToken(request);
+        try {
+            categoryService.addTask(user, categoryId, categoryRequest);
+            return ResponseEntity.ok("Task added to category successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
+    }
 
 }

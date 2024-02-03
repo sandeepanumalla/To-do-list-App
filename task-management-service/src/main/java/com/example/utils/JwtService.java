@@ -31,6 +31,8 @@ public class JwtService {
         Instant expirationInstant = now.plusMillis(expirationInMs);
         Date expirationDate = Date.from(expirationInstant);
 
+
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
@@ -57,7 +59,7 @@ public class JwtService {
     }
 
     // Check if a JWT token is expired
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 

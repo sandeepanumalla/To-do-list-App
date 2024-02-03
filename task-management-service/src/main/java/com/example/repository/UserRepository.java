@@ -33,4 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
              "    )" +
              ")")
      void deleteSharedTasksForUsers(@Param("userIds") List<Long> userIds, @Param("taskId") Long taskId);
+
+     Optional<User> findUserByUsernameOrEmail(String username, String email);
 }

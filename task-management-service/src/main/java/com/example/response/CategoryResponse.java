@@ -9,5 +9,5 @@ import java.util.Set;
 public class CategoryResponse {
     private long id;
     private String categoryName;
-    private Set<Task> tasks ;
+//    private Set<Task> tasks ;
 }

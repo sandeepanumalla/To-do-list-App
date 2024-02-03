@@ -174,6 +174,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         resetPasswordRepository.save(passwordToken);
         String body = String.format("click on the link to reset your password. %s", generateResetUrl().toString());
+        // below statement should be done through RabbitTemplate
         mailService.send(user.get().getEmail(), "reset password", body);
     }
 

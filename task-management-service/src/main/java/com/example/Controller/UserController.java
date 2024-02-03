@@ -1,29 +1,41 @@
 package com.example.Controller;
 
-import com.example.config.RestEndpoints;
-import com.example.model.Category;
-import com.example.model.Task;
-import com.example.model.TaskStatus;
-import com.example.repository.TaskRepository;
-import com.example.response.TaskResponse;
-import com.example.service.TaskSharingService;
-import com.example.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.example.model.SortOption;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.example.config.RestEndpoints;
+import com.example.model.Category;
+import com.example.model.TaskStatus;
+import com.example.model.User;
+import com.example.repository.TaskRepository;
+import com.example.response.TaskResponse;
+import com.example.service.TaskSharingService;
+import com.example.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 
 @RestController
 @RequestMapping(RestEndpoints.USER)
 //@CrossOrigin(allowCredentials = "true", origins = "{http://localhost:3000,http://localhost:8181}")
-public class UserController {
+public class UserController  {
     private final UserService userService;
     private final TaskRepository taskRepository;
 
@@ -79,6 +91,30 @@ public class UserController {
         }
     }
 
+
+//    @GetMapping("/tasks")
+//    public SomeData getMethodName(@RequestParam String param) {
+//        return new SomeData();
+//    }
+    
+    public void getAllTasksForUser() {
+
+    }
+
+
+
+    @GetMapping
+    public void showProfile(@CookieValue("jwt") String token) {
+        User user = userService.getUserIdByToken(token);
+
+    }
+
+    @PatchMapping()
+    public void updateProfile() {
+
+    }
+
+
     private boolean areFiltersEmpty(List<TaskStatus> statusFilters, List<Category> categoryFilters) {
         return statusFilters.isEmpty() && categoryFilters.isEmpty();
     }
@@ -103,4 +139,8 @@ public class UserController {
                 ? categories.stream().map(String::toUpperCase).map(Category::valueOf).toList()
                 : Collections.emptyList();
     }
+
+
+
+
 }

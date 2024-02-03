@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.Controller.GenericUpdateController;
 import com.example.model.Reminder;
 import com.example.request.ReminderRequest;
 import com.example.response.ReminderResponse;
@@ -41,4 +42,6 @@ public interface ReminderService {
      */
 
     void deleteReminder(Long taskId, Long reminderId, Long userId);
+
+    void sendReminders();
 }
