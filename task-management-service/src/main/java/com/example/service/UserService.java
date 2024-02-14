@@ -24,7 +24,6 @@ public interface UserService {
 
     List<Task> getSharedTasks(String token);
 
-    public List<TaskResponse>  getAllTasksDup(long userId, TaskStatus status, Boolean isImportant, String category, Pageable pageable);
-    public List<TaskResponse>  getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable);
+//    public List<TaskResponse>  getAllTasksDup(long userId, TaskStatus status, Boolean isImportant, String category, Pageable pageable);
 
 }

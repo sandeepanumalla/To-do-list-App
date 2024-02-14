@@ -1,14 +1,17 @@
 package com.example.service;
 
 import com.example.model.Task;
+import com.example.model.TaskStatus;
 import com.example.model.User;
 import com.example.request.TaskRequest;
 import com.example.request.TaskShareRequest;
 import com.example.request.TaskUpdateRequest;
 import com.example.response.TaskResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TaskService {
 //    TaskResponse createTask(TaskRequest taskRequest);
@@ -25,5 +28,9 @@ public interface TaskService {
 
     void removeCategoryFromTask(long userId, Long taskId, Long categoryId) throws IllegalAccessException;
 
+    Map<String, Integer> taskSummary(Long userId);
 
+    public List<TaskResponse>  getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable);
+
+    public List<TaskResponse> searchTaskByTitle(User user, String keywords);
 }

@@ -21,10 +21,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(RestEndpoints.TASKS)
-public class TaskController extends GenericUpdateController<Task, Long>{
+public class TaskController
+        extends GenericUpdateController<Task, Long>
+{
 
     private final TaskService taskService;
     private final UserService userService;
@@ -114,7 +117,7 @@ public class TaskController extends GenericUpdateController<Task, Long>{
         return ResponseEntity.ok().body("reminder deleted successfully");
     }
 
-    @PutMapping(RestEndpoints.SHARE_THE_TASK)
+    @PostMapping(RestEndpoints.SHARE_THE_TASK)
     public ResponseEntity<?> shareTheTask(@CookieValue("jwt") String CookieValue, @PathVariable("taskId") Long taskId,@Valid @RequestBody TaskShareRequest taskShareRequest,
                                           HttpServletRequest request) {
         System.out.println("cookie " + CookieValue);
@@ -126,7 +129,7 @@ public class TaskController extends GenericUpdateController<Task, Long>{
         return ResponseEntity.ok("task has been shared");
     }
 
-    @DeleteMapping(RestEndpoints.UNSHARE_THE_TASK)
+    @PatchMapping(RestEndpoints.UNSHARE_THE_TASK)
     public ResponseEntity<?> unshareTheTask(@PathVariable("taskId") Long taskId,@Valid @RequestBody TaskUnShareRequest taskUnShareRequest,
                                             HttpServletRequest request) {
         User owner = userService.getUserIdByToken(request);
@@ -218,7 +221,21 @@ public class TaskController extends GenericUpdateController<Task, Long>{
         Pageable pageable = PageRequest.of(0, pageSize, ascending ?
                 Sort.by(Sort.Direction.ASC, validatedSortBy.getValue()) :
                 Sort.by(Sort.Direction.DESC, validatedSortBy.getValue()));
-        List<TaskResponse> taskResponses = userService.getAllTasksDup2(userId, status, important, category, sharedWith, pageable);
+        List<TaskResponse> taskResponses = taskService.getAllTasksDup2(userId, status, important, category, sharedWith, pageable);
+        return ResponseEntity.ok(taskResponses);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<?> getTaskSummary(HttpServletRequest request) {
+        User user = userService.getUserIdByToken(request);
+        Map<String, Integer> taskSummary = taskService.taskSummary(user.getUserId());
+        return ResponseEntity.ok(taskSummary);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam("keywords") String keywords, HttpServletRequest request) {
+        User user = userService.getUserIdByToken(request);
+        List<TaskResponse> taskResponses = taskService.searchTaskByTitle(user, keywords);
         return ResponseEntity.ok(taskResponses);
     }
 

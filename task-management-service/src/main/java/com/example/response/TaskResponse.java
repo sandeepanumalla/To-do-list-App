@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class TaskResponse implements Serializable {
     private Long id;
     private String title;
     private String description;
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
     private CategoryResponse category;
     private LocalDateTime creationDate;
     private LocalDateTime completionDate;

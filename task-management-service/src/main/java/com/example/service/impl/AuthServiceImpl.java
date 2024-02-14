@@ -1,5 +1,6 @@
 package com.example.service.impl;
 
+import com.example.exceptions.UsernameOrEmailAlreadyTakenException;
 import com.example.model.AuthenticationType;
 import com.example.model.PasswordToken;
 import com.example.model.User;
@@ -124,21 +125,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String registerUser(@Valid UserRegisterRequest userRegisterRequest) throws IllegalArgumentException {
-//        checkUserAvailabilityInDatabase(userRegisterRequest);
         String encodedPassword = passwordEncoder.encode(userRegisterRequest.getPassword());
         User user =  modelMapper.map(userRegisterRequest, User.class);
         user.setPassword(encodedPassword);
         try {
             userRepository.save(user);
         } catch (ConstraintViolationException e) {
-            throw new IllegalArgumentException("Username or email is already taken.");
+            throw new UsernameOrEmailAlreadyTakenException("Username or email is already taken.");
         } catch (DataIntegrityViolationException e) {
             if(e.getMessage().contains("Duplicate entry")) {
-                throw new IllegalArgumentException("Username or email is already taken.");
+                throw new UsernameOrEmailAlreadyTakenException("Username or email is already taken.");
             } else if(e.getMessage().contains("cannot be null")) {
                 throw new IllegalArgumentException(e.getRootCause());
             }
-            throw new IllegalArgumentException("Data integrity violation occurred.");
+            throw new DataIntegrityViolationException("Data integrity violation occurred.");
         }
         return "user has been registered successfully";
     }

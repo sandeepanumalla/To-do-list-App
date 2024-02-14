@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.util.Lazy;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Set;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,7 @@ public class Task implements Serializable {
     @CreatedDate
     private LocalDateTime creationDate;
 
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
 
     private LocalDateTime completionDate;
 

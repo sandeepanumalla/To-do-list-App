@@ -17,6 +17,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class TaskRequest {
 
     private String description;
 
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
 
     @NotNull(message = "category should not be blank")
     private Category category;

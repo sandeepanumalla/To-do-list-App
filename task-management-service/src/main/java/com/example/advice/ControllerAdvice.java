@@ -72,6 +72,8 @@
 
 package com.example.advice;
 
+import com.example.exceptions.UserRegistrationException;
+import com.example.exceptions.UsernameOrEmailAlreadyTakenException;
 import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,5 +178,16 @@ public class ControllerAdvice {
     public ResponseEntity<String> exceptionHandler(Exception exception) {
         logger.error("Handling Exception: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(UsernameOrEmailAlreadyTakenException.class)
+    public ResponseEntity<String> exceptionHandler(UsernameOrEmailAlreadyTakenException usernameOrEmailAlreadyTakenException) {
+// Log the exception
+        logger.error("An error occurred during user registration: " + usernameOrEmailAlreadyTakenException.getMessage());
+
+        // Return an appropriate HTTP response
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("An error occurred during user registration: " + usernameOrEmailAlreadyTakenException.getMessage());
     }
 }

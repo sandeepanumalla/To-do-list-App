@@ -1,32 +1,33 @@
 package com.example.service.impl;
 
-import com.example.model.Category;
-import com.example.model.CategoryTable;
-import com.example.model.Task;
-import com.example.model.User;
+import com.example.model.*;
 import com.example.repository.CategoryRepository;
 import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.request.TaskRequest;
-import com.example.request.TaskShareRequest;
 import com.example.request.TaskUpdateRequest;
-import com.example.response.NotificationDTO;
 import com.example.response.TaskResponse;
 import com.example.service.TaskService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Service
 @Transactional
@@ -52,8 +53,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse createTask(User owner, TaskRequest taskRequest) throws Exception {
         taskRequest.setCategory(Category.valueOf(taskRequest.getCategory().toString()));
-        LocalDateTime dueDate = taskRequest.getDueDate();
-        if(dueDate.isBefore(LocalDateTime.now())) {
+        LocalDate dueDate = taskRequest.getDueDate();
+        if(isValidDate(dueDate) && dueDate.isBefore(LocalDate.now())) {
             throw new RuntimeException("due date cannot set in past");
         } else {
             Task task = modelMapper.map(taskRequest, Task.class);
@@ -65,7 +66,12 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-
+    private boolean isValidDate(LocalDate date) {
+        // Check if the date is valid by comparing it with a parsed date string
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedDate = date.format(formatter);
+        return formattedDate.equals(date.toString());
+    }
     @Override
     @Cacheable(value = "taskResponses", key = "#taskId")
     public TaskResponse getTaskById(long taskId) {
@@ -130,6 +136,86 @@ public class TaskServiceImpl implements TaskService {
         } else {
             throw new NoSuchElementException("Task is not associated with the specified category");
         }
+    }
+
+    @Override
+//    @Cacheable("taskSummaryCache")
+    public Map<String, Integer> taskSummary(Long userId) {
+        Map<String, Integer> taskSummary = new HashMap<>();
+        Page<Task> tasks = taskRepository.findByOwnerId(userId, Pageable.unpaged());
+
+        long importantTasks = tasks.stream().filter(Task::isImportant).count();
+        taskSummary.put("important", (int) importantTasks);
+
+        long completedTasks = tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.COMPLETED).count();
+        taskSummary.put("completed", (int) completedTasks);
+
+        LocalDate today = LocalDate.now();
+        long todayTasksCount = tasks.stream()
+                .filter(task -> task.getDueDate() != null && task.getDueDate().equals(LocalDate.now()))
+                .count();
+        taskSummary.put("my-day", (int) todayTasksCount);
+
+        taskSummary.put("all", tasks.stream().toList().size());
+
+        long plannedTasksCount = tasks.stream().filter(task -> task.getDueDate() != null && task.getDueDate().isBefore(LocalDate.now())).count();
+        taskSummary.put("planned-tasks", (int) plannedTasksCount);
+
+        taskSummary.put("assignedTo", 0);
+
+        long unCategorizedTasks = tasks.stream().filter(task -> task.getTaskStatus() == null).count();
+        taskSummary.put("unCategorizedTasks", (int) unCategorizedTasks);
+
+        return taskSummary;
+    }
+
+
+    @Override
+    public List<TaskResponse> getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable) {
+        Specification<Task> specification = ((root, query, criteriaBuilder) -> {
+
+            List<Predicate> predicates = new ArrayList<Predicate>();
+
+            predicates.add(criteriaBuilder.equal((root.get("owner").get("id")), userId));
+
+            if(status != null) {
+                predicates.add(criteriaBuilder.equal((root.get("taskStatus")), status));
+            }
+            if(category != null) {
+                predicates.add(criteriaBuilder.equal((root.get("category")), category));
+            }
+            if (isImportant != null) {
+                predicates.add(criteriaBuilder.equal((root.get("isImportant")), isImportant));
+            }
+            if(sharedWith) {
+                predicates.add(criteriaBuilder.isNotEmpty(root.get("sharedWithUsers")));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        });
+
+        Page<Task> tasks = taskRepository.findAll(specification, pageable);
+        return convertTasksToTaskResponses(tasks.toList());
+    }
+
+    @Override
+    public List<TaskResponse> searchTaskByTitle(User user, String keywords) {
+        if (keywords == null || keywords.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Task> tasks = taskRepository.findAll(((root, query, criteriaBuilder) -> {
+            Join<Task, User> ownerJoin = root.join("owner");
+            Predicate titlePredicate = criteriaBuilder.like(root.get("title"),  "%" + keywords + "%");
+            Predicate userPredicate = criteriaBuilder.equal(ownerJoin.get("userId"), user.getUserId());
+            Predicate finalPredicate = criteriaBuilder.and(titlePredicate, userPredicate);
+            query.where(finalPredicate);
+            return titlePredicate;
+        }));
+        return convertTasksToTaskResponses(tasks);
+    }
+
+    private List<TaskResponse> convertTasksToTaskResponses(List<Task> tasks) {
+        // Implement the logic to convert Task objects to TaskResponse objects
+        return tasks.stream().map((element) -> modelMapper.map(element, TaskResponse.class)).collect(Collectors.toList());
     }
 
     public boolean checkUserOwnershipForTasksAndCategory(long userId, long taskId, long categoryId) throws IllegalAccessException {

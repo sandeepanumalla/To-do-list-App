@@ -148,77 +148,11 @@ public class UserServiceImpl implements UserService {
         return user.get();
     }
 
-    @Override
-    public List<TaskResponse> getAllTasksDup(long userId, TaskStatus status, Boolean isImportant, String category,
-                                             Pageable pageable) {
 
-        Page<Task> tasks = null;
-        if(category != null && status != null && isImportant != null) {
-            tasks = taskRepository.findByOwnerUserIdAndTaskStatusAndIsImportantAndCategoryCategoryNameAndSharedWithUsersNotEmpty(userId, status, isImportant, category, pageable);
-        }
-        else if(category != null && isImportant != null) { // skip status
-            tasks = taskRepository.findByOwnerUserIdAndIsImportantAndCategoryCategoryName(userId, isImportant, category, pageable);
-        }
-        else if(status != null && isImportant != null) { // skip category
-            tasks = taskRepository.findByOwnerUserIdAndTaskStatusAndIsImportant(userId, status, isImportant, pageable);
-        }
-        else if(category != null && status != null) { //skip isImportant
-            tasks = taskRepository.findByOwnerUserIdAndTaskStatusAndCategoryCategoryName(userId, status, category, pageable);
-        }
-        else if (status != null) { // skip isImportant and category
-            tasks = taskRepository.findByOwnerUserIdAndTaskStatus(
-                    userId, status, pageable);
-        } else if (category != null) { // skip status and isImportant
-            tasks = taskRepository.findByOwnerUserIdAndCategoryCategoryName(
-                    userId, category, pageable);
-        } else if (isImportant != null) { // skip category and status
-            tasks = taskRepository.findByOwnerUserIdAndIsImportant(
-                    userId, isImportant, pageable);
-        }
-        else {
-            tasks = taskRepository.findByOwnerId(userId, pageable);
-        }
-        System.out.println(tasks.getContent().size());
-//            Page<Task> tasks = taskRepository.findByOwnerUserIdAndTaskStatusAndIsImportantAndCategoryCategoryName(userId, status, isImportant, category, pageable);
-//            Page<Task> dup = taskRepository.customFindTasksByCriteria(userId, status, category, pageable);
-//        System.out.println(tasks.getSize());
-//            System.out.println(dup);
-//        System.out.println("dfdf");
-        return convertTasksToTaskResponses(tasks.toList());
 
-    }
 
-    @Override
-    public List<TaskResponse> getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable) {
-        Specification<Task> specification = ((root, query, criteriaBuilder) -> {
-
-            List<Predicate> predicates = new ArrayList<Predicate>();
-
-            predicates.add(criteriaBuilder.equal((root.get("owner").get("id")), userId));
-
-            if(status != null) {
-                predicates.add(criteriaBuilder.equal((root.get("taskStatus")), status));
-            }
-            if(category != null) {
-                predicates.add(criteriaBuilder.equal((root.get("category")), category));
-            }
-            if (isImportant != null) {
-                predicates.add(criteriaBuilder.equal((root.get("isImportant")), isImportant));
-            }
-            if(sharedWith) {
-                predicates.add(criteriaBuilder.isNotEmpty(root.get("sharedWithUsers")));
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        });
-
-        Page<Task> tasks = taskRepository.findAll(specification, pageable);
-        return convertTasksToTaskResponses(tasks.toList());
-    }
 
 
     // Implement the conversion logic if necessary
-    private List<TaskResponse> convertTasksToTaskResponses(List<Task> tasks) {
-        // Implement the logic to convert Task objects to TaskResponse objects
-        return tasks.stream().map((element) -> modelMapper.map(element, TaskResponse.class)).collect(Collectors.toList());
-    }
+
 }

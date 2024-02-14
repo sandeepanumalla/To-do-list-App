@@ -1,5 +1,7 @@
 package com.example.Controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
 import java.util.Set;
+
+//@Hidden
 public abstract class GenericUpdateController<T, ID> {
 
     @Autowired
