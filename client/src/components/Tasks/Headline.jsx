@@ -3,6 +3,7 @@ import React, { useContext } from "react";
 import { useNavigate } from "react-router";
 import TaskContext from "../../context/Context";
 import { getAllTasks } from "../../services/UserTasks";
+import { LuArrowUpDown } from "react-icons/lu";
 
 
 export function Headline({HeadlineName, HeadlineIcon}) {
@@ -10,7 +11,7 @@ export function Headline({HeadlineName, HeadlineIcon}) {
     const {myState, setMyState} = useContext(TaskContext);
 
     const handleClick = async () => {
-        setMyState("react context works");
+        setMyState("react contest works");
         console.log("clicked sort by");
         const response = await getAllTasks();
         console.log(response)
@@ -31,9 +32,10 @@ export function Headline({HeadlineName, HeadlineIcon}) {
             <Box sx={{paddingLeft: 2, flex: 2}}>
                 <Typography variant="h4">{HeadlineName}</Typography>
             </Box>
-            <Box>
-                <Button onClick={handleClick}  variant="contained" color="secondary">
-                    Sort By
+            <Box  marginLeft={10}>
+                <Button sx={{width: '10rem', display: 'flex', justifyContent: 'space-between'}} onClick={handleClick} autoCapitalize={false} variant="contained" color="primary">
+                    <Typography autoCapitalize={false} >Sort By</Typography>
+                    <LuArrowUpDown />
                 </Button>
                 <Typography>
                     {myState}

@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -50,6 +51,16 @@ public class SecurityConfig {
         this.jwtAuthenticationException = jwtAuthenticationException;
     }
 
+
+    public void userDetails(AuthenticationManagerBuilder authenticationManagerBuilder) {
+        try {
+            authenticationManagerBuilder.inMemoryAuthentication().withUser("user1")
+                   .password(new BCryptPasswordEncoder().encode("123")).roles("USER");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        };
+    }
+
     @Bean
     public SecurityFilterChain config(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
@@ -61,11 +72,12 @@ public class SecurityConfig {
 //                            .requestMatchers(allowedUrls).permitAll()
                             .anyRequest().permitAll();
                 })
-//                .addFilterBefore(oAuth2RedirectionFilter, BasicAuthenticationFilter.class)
+//                .addFilterBefore(oAuth2Redirectio6nFilter, BasicAuthenticationFilter.class)
                 .oauth2Login(auth -> auth.loginPage("/oauth2/authorization/google").defaultSuccessUrl("/home").successHandler(jwtAuthenticationSuccessHandler()))
                 .exceptionHandling(exceptionHandling -> {
                     exceptionHandling.authenticationEntryPoint(jwtAuthenticationException);
                 })
+                .sessionManagement((a) -> a.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
 
@@ -112,7 +124,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
         configuration.setAllowedMethods(List.of("HEAD",
                 "GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));

@@ -47,9 +47,7 @@ const BoxContainer = styled(Box)({
                     <Headline HeadlineIcon={HeadlineIcon} HeadlineName={HeadlineName}  />
                     {
                         tasks.map((eachCard, index) => (
-                            <TaskCards key={index} taskData={eachCard} onClick={()=>handleSelectedTask(eachCard)} 
-                            // handleOpenRightDrawer={handleOpenRightDrawer} 
-                             />
+                            <TaskCards key={index} taskData={eachCard} onClick={()=>handleSelectedTask(eachCard)}/>
                         ))
                     }
                     {/* <CreateTaskForm  handleClick={handleClick} /> */}

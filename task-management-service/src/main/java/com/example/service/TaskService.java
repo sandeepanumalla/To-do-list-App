@@ -28,9 +28,18 @@ public interface TaskService {
 
     void removeCategoryFromTask(long userId, Long taskId, Long categoryId) throws IllegalAccessException;
 
-    Map<String, Integer> taskSummary(Long userId);
+    Map<String, Integer> taskSummary(User user);
 
-    public List<TaskResponse>  getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable);
+    public List<TaskResponse> getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable);
 
     public List<TaskResponse> searchTaskByTitle(User user, String keywords);
+
+    public List<TaskResponse> getSharedTask(User user, Pageable pageable);
+
+    public void addTaskToMyDay(Long taskId, User user);
+
+    public void removeTaskFromMyDay(Long taskId, User userId);
+
+    public List<TaskResponse> fetchMyDayTasks(User user);
+
 }

@@ -20,13 +20,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping(RestEndpoints.TASKS)
-public class TaskController
-        extends GenericUpdateController<Task, Long>
+public class TaskController extends GenericUpdateController<Task, Long>
 {
 
     private final TaskService taskService;
@@ -80,7 +80,7 @@ public class TaskController
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        return ResponseEntity.status(HttpStatus.OK).body("task added to the category");
+        return ResponseEntity.status(HttpStatus.OK).body("task added to the categorych");
     }
 
     @DeleteMapping(RestEndpoints.REMOVE_CATEGORY_FROM_TASK)
@@ -130,7 +130,7 @@ public class TaskController
     }
 
     @PatchMapping(RestEndpoints.UNSHARE_THE_TASK)
-    public ResponseEntity<?> unshareTheTask(@PathVariable("taskId") Long taskId,@Valid @RequestBody TaskUnShareRequest taskUnShareRequest,
+    public ResponseEntity<?> unShareTheTask(@PathVariable("taskId") Long taskId,@Valid @RequestBody TaskUnShareRequest taskUnShareRequest,
                                             HttpServletRequest request) {
         User owner = userService.getUserIdByToken(request);
         taskUnShareRequest.setTaskId(taskId);
@@ -177,6 +177,28 @@ public class TaskController
         }
     }
 
+    @PatchMapping("/{id}/due-date")
+    public ResponseEntity<?> updateDueDateField(@PathVariable Long id, @RequestBody LocalDate newDueDate, HttpServletRequest httpServletRequest) {
+//
+//        if(newDueDate.isBefore(LocalDate.now())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("dueDate can't be set to past");
+//        }
+
+        ResponseEntity<?>  response = updateField(id, "dueDate", newDueDate);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            User user = userService.getUserIdByToken(httpServletRequest);
+            Task updatedTask = (Task) response.getBody();
+            if(newDueDate.isEqual(LocalDate.now())) {
+                taskService.addTaskToMyDay(updatedTask.getId(), user);
+            }
+            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
+            return ResponseEntity.ok(taskResponseDTO);
+        } else {
+            return ResponseEntity.status(response.getStatusCode()).build();
+        }
+    }
+
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateTaskStatusField(@PathVariable Long id, @RequestBody TaskStatus newValue) {
         ResponseEntity<?>  response = updateField(id, "taskStatus", newValue);
@@ -201,34 +223,71 @@ public class TaskController
         }
     }
 
-    @GetMapping // needs to change
-    public ResponseEntity<?> getAllTasksForUserA(
+//    @GetMapping // needs to change
+//    public ResponseEntity<?> getAllTasksForUserA(
+//            HttpServletRequest request,
+//            @RequestParam(name = "sort", defaultValue = "title") String sortBy,
+//            @RequestParam(name = "pageNum", defaultValue = "0", required = false) Integer pageNum,
+//            @RequestParam(name = "important", defaultValue = "defaultValue", required = false) String importantParam,                                               @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
+//            @RequestParam(name = "status", required = false) String taskStatus,
+//            @RequestParam(name = "category", required = false) String category,
+//            @RequestParam(name = "shared", required = false) String sharedWithParam,
+//            @RequestParam(name = "myDay", required = false) String myDayParam
+//    ) {
+//        Boolean important = "defaultValue".equals(importantParam) ? null : Boolean.valueOf(importantParam);
+//        Boolean sharedWith = "defaultValue".equals(sharedWithParam) ? null : Boolean.valueOf(sharedWithParam);
+//        User user = userService.getUserIdByToken(request);
+//        boolean ascending = !sortBy.startsWith("-");
+//        SortOption validatedSortBy = validateSortBy(sortBy);
+//
+//        TaskStatus status = taskStatus != null ? TaskStatus.valueOf(taskStatus.toUpperCase()) : null;
+//        Pageable pageable = PageRequest.of(0, pageSize, ascending ?
+//                Sort.by(Sort.Direction.ASC, validatedSortBy.getValue()) :
+//                Sort.by(Sort.Direction.DESC, validatedSortBy.getValue()));
+//
+//        List<TaskResponse> taskResponses = taskService.getAllTasksDup2(user.getUserId(), status, important, category, sharedWith, pageable);
+//        return ResponseEntity.ok(taskResponses);
+//    }
+
+
+    @GetMapping
+    public ResponseEntity<?> getAllTasks(
             HttpServletRequest request,
             @RequestParam(name = "sort", defaultValue = "title") String sortBy,
             @RequestParam(name = "pageNum", defaultValue = "0", required = false) Integer pageNum,
-            @RequestParam(name = "important", defaultValue = "defaultValue", required = false) String importantParam,                                               @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
+            @RequestParam(name = "important", defaultValue = "defaultValue", required = false) String importantParam,
+            @RequestParam(name = "size", defaultValue = "5") Integer pageSize,
             @RequestParam(name = "status", required = false) String taskStatus,
             @RequestParam(name = "category", required = false) String category,
-            @RequestParam(name = "shared", required = false) String sharedWithParam
+            @RequestParam(name = "shared", required = false) String sharedWithParam,
+            @RequestParam(name = "myDay", required = false) String myDayParam
     ) {
         Boolean important = "defaultValue".equals(importantParam) ? null : Boolean.valueOf(importantParam);
         Boolean sharedWith = "defaultValue".equals(sharedWithParam) ? null : Boolean.valueOf(sharedWithParam);
-        long userId = userService.getUserIdByToken(request).getUserId();
         boolean ascending = !sortBy.startsWith("-");
         SortOption validatedSortBy = validateSortBy(sortBy);
 
         TaskStatus status = taskStatus != null ? TaskStatus.valueOf(taskStatus.toUpperCase()) : null;
-        Pageable pageable = PageRequest.of(0, pageSize, ascending ?
+        Pageable pageable = PageRequest.of(pageNum, pageSize, ascending ?
                 Sort.by(Sort.Direction.ASC, validatedSortBy.getValue()) :
                 Sort.by(Sort.Direction.DESC, validatedSortBy.getValue()));
-        List<TaskResponse> taskResponses = taskService.getAllTasksDup2(userId, status, important, category, sharedWith, pageable);
+
+        User user = userService.getUserIdByToken(request);
+        List<TaskResponse> taskResponses;
+
+        if ("true".equals(myDayParam)) {
+            taskResponses = taskService.fetchMyDayTasks(user);
+        } else {
+            taskResponses = taskService.getAllTasksDup2(user.getUserId(), status, important, category, sharedWith, pageable);
+        }
+
         return ResponseEntity.ok(taskResponses);
     }
 
     @GetMapping("/summary")
     public ResponseEntity<?> getTaskSummary(HttpServletRequest request) {
         User user = userService.getUserIdByToken(request);
-        Map<String, Integer> taskSummary = taskService.taskSummary(user.getUserId());
+        Map<String, Integer> taskSummary = taskService.taskSummary(user);
         return ResponseEntity.ok(taskSummary);
     }
 
@@ -247,4 +306,19 @@ public class TaskController
             return SortOption.TITLE; // Default sorting option
         }
     }
+
+    @RequestMapping(path = "/{taskId}/my-day", method = RequestMethod.POST)
+    public ResponseEntity<?> addTaskToMyDay(HttpServletRequest request, @PathVariable Long taskId) {
+        User user = userService.getUserIdByToken(request);
+        taskService.addTaskToMyDay(taskId, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Task added to My Day successfully.");
+    }
+
+    @RequestMapping(path = "/{taskId}/my-day", method = RequestMethod.DELETE)
+    public ResponseEntity<?> removeTaskFromMyDay(HttpServletRequest request, @PathVariable Long taskId) {
+        User user = userService.getUserIdByToken(request);
+        taskService.removeTaskFromMyDay(taskId, user);
+        return ResponseEntity.noContent().build();
+    }
+
 }

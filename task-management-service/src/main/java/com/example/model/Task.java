@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import java.time.LocalDateTime;
+
 import java.util.List;
 @Entity
 @Builder
@@ -39,7 +40,7 @@ public class Task implements Serializable {
 
     private TaskStatus taskStatus;
 
-    @ManyToOne()
+    @ManyToOne
     private CategoryTable category;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,14 +62,27 @@ public class Task implements Serializable {
     )
     private Set<User> assignedToUsers;
 
-    @OneToMany
+    @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "task")
     private List<Attachment> attachments;
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reminder> reminders;
 
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "task")
+    private List<Step> steps;
+
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "my_day_task_id")
+    private MyDayTask myDayTask;
+
+    @Column(name = "is_part_of_my_day")
+    private boolean isPartOfMyDay;
+
+    @OneToOne(mappedBy = "task" ,orphanRemoval = true, cascade = CascadeType.ALL)
+    private TaskRecurrence taskRecurrence;
+
     public void setIsImportant(Boolean important) {
         isImportant = important;
     }
-
 }

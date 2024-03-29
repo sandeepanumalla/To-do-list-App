@@ -1,11 +1,11 @@
 package com.example.utils;
 
 
+import com.example.exceptions.JwtParsingException;
 import com.example.model.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -20,6 +20,12 @@ public class JwtService {
 
     Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
+    private final long expirationInMs;
+
+    public JwtService(@Value("${jwt.expiration}") String expirationInMs) {
+        this.expirationInMs = Long.parseLong(expirationInMs);
+    }
+
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, username);
@@ -27,7 +33,6 @@ public class JwtService {
 
     private String createToken(Map<String, Object> claims, String subject) {
         Instant now = Instant.now();
-        long expirationInMs = 1000 * 500;
         Instant expirationInstant = now.plusMillis(expirationInMs);
         Date expirationDate = Date.from(expirationInstant);
 
@@ -55,7 +60,11 @@ public class JwtService {
 
     // Extract all claims from a JWT token
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+        try {
+            return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+        } catch (  Exception exception) {
+            throw new JwtParsingException( exception.getMessage());
+        }
     }
 
     // Check if a JWT token is expired

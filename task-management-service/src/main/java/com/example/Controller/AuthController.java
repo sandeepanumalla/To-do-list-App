@@ -132,7 +132,7 @@ public class AuthController {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        setCookie(response, "jwt", userWelcomeResponse.getToken(), 3600, "/", true, false);
+        setCookie(response, "jwt", userWelcomeResponse.getToken(), 86400, "/", true, false);
         String message = String.format("Hey %s, welcome back!", userWelcomeResponse.getFirstName());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(message);
     }

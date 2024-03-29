@@ -72,9 +72,11 @@
 
 package com.example.advice;
 
+import com.example.exceptions.JwtParsingException;
 import com.example.exceptions.UserRegistrationException;
 import com.example.exceptions.UsernameOrEmailAlreadyTakenException;
-import jakarta.validation.ValidationException;
+import com.example.exceptions.ValidationException;
+import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
@@ -111,16 +113,28 @@ public class ControllerAdvice {
         return ResponseEntity.badRequest().body(errorMap);
     }
 
-    @ExceptionHandler(jakarta.validation.ValidationException.class)
-    public ResponseEntity<String> handleValidationException(ValidationException exception) {
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<String> handleValidationException(Exception exception) {
         String errorMessage = "Validation error: " + exception.getCause().getMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage);
     }
+
+//    @ExceptionHandler({SignatureException.class, ValidationException.class})
+//    public ResponseEntity<String> handleSignatureException(Exception exception) {
+//        String errorMessage = "Signature validation error: " + exception.getMessage();
+//        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage);
+//    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<?> badCredentialsExceptionHandler(BadCredentialsException exception) {
         logger.info("Handling BadCredentialsException: {}", exception.getMessage());
         return ResponseEntity.badRequest().body(exception.getMessage());
+    }
+
+    @ExceptionHandler(JwtParsingException.class)
+    public ResponseEntity<String> handleJwtParsingException(JwtParsingException exception) {
+        String errorMessage = "Error parsing JWT: " + exception.getMessage();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -150,13 +164,14 @@ public class ControllerAdvice {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> exceptionHandler(IllegalArgumentException exception) {
-        logger.error("Handling Exception: {}", exception.getMessage());
+        logger.error("Handling IllegalArgumentException: {}", exception.getMessage());
+        exception.printStackTrace();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<String> noSuchElementExceptionHandler(NoSuchElementException exception) {
-        logger.error("Handling Exception: {}", exception.getMessage());
+        logger.error("Handling NoSuchElementException: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
 
@@ -176,6 +191,7 @@ public class ControllerAdvice {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> exceptionHandler(Exception exception) {
+
         logger.error("Handling Exception: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }

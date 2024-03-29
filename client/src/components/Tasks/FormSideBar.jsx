@@ -1,8 +1,10 @@
 import { Close } from '@mui/icons-material';
-import { Box, Divider, IconButton, Input, MenuItem, Paper, Stack, Typography, styled } from '@mui/material';
+import { Box,Divider, IconButton, Input, MenuItem, Paper, Stack, Typography, styled } from '@mui/material';
 import React, { useContext } from 'react';
+import Textarea from '@mui/joy/Textarea';
 import { BsCircle, BsPlusLg, BsStar, BsSun } from 'react-icons/bs';
 import PageContext from '../../context/PageContext';
+import { FaUserPlus } from "react-icons/fa";
 
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -44,7 +46,9 @@ const FormSideBar = ({
               <TaskAddToMyDayOption     />
               <TaskDateSettingOptions     />
               <AssignToOption />
-              <AddFileOption />
+              <AssignToOption />
+                <AddNote />
+                <Button color="secondary">Delete</Button>
             </Stack>
           <Box>
           </Box>
@@ -60,7 +64,8 @@ export default FormSideBar
         <Item>
           <MenuItem divider={<Divider orientation='horizontal'></Divider>} display='flex' alignItems='center' flexDirection='row'>
               <Box>
-                <BsSun fontSize='15px'></BsSun>
+
+                  <FaUserPlus fontSize='15px'></FaUserPlus>
               </Box>
               <Box sx={{
 paddingLeft: '10px'
@@ -89,11 +94,29 @@ paddingLeft: '10px'
       )
     }
 
-    function TaskDateSettingOptions({}) {
-      return (<Item>
-                  <MenuItem divider={<Divider orientation='horizontal'></Divider>} display='flex' alignItems='center' flexDirection='row'>
-                      <Box>
-                        <BsSun fontSize='15px'></BsSun>
+    function AddNote() {
+        return (
+            <Box sx={{margin: '6px'}}>
+
+                    <Textarea
+                        placeholder="Addsds Note"
+                        required
+                        size="lg"
+                        sx={{ mb: 1 }}
+                    />
+
+            </Box>
+        )
+    }
+
+
+
+function TaskDateSettingOptions({}) {
+    return (<Item>
+        <MenuItem divider={<Divider orientation='horizontal'></Divider>} display='flex' alignItems='center'
+                  flexDirection='row'>
+            <Box>
+                <BsSun fontSize='15px'></BsSun>
                       </Box>
                       <Box sx={{
       paddingLeft: '10px'

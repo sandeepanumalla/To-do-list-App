@@ -1,15 +1,12 @@
 package com.example.service.impl;
 
 import com.example.model.*;
-import com.example.repository.CategoryRepository;
-import com.example.repository.TaskRepository;
-import com.example.repository.UserRepository;
+import com.example.repository.*;
 import com.example.request.TaskRequest;
 import com.example.request.TaskUpdateRequest;
 import com.example.response.TaskResponse;
 import com.example.service.TaskService;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +14,14 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.chrono.ChronoLocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,8 +30,11 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class TaskServiceImpl implements TaskService {
+    private final AttachmentRepository attachmentRepository;
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
+
+    private final MyDayTaskRepository myDayTaskRepository;
 
     private final UserRepository userRepository;
 
@@ -42,11 +42,14 @@ public class TaskServiceImpl implements TaskService {
 
 
     @Autowired
-    public TaskServiceImpl(TaskRepository taskRepository, ModelMapper modelMapper, UserRepository userRepository, CategoryRepository categoryRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, ModelMapper modelMapper, UserRepository userRepository, CategoryRepository categoryRepository,
+                           AttachmentRepository attachmentRepository, MyDayTaskRepository myDayTaskRepository) {
         this.taskRepository = taskRepository;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
+        this.attachmentRepository = attachmentRepository;
+        this.myDayTaskRepository = myDayTaskRepository;
     }
 
 
@@ -54,16 +57,16 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse createTask(User owner, TaskRequest taskRequest) throws Exception {
         taskRequest.setCategory(Category.valueOf(taskRequest.getCategory().toString()));
         LocalDate dueDate = taskRequest.getDueDate();
-        if(isValidDate(dueDate) && dueDate.isBefore(LocalDate.now())) {
-            throw new RuntimeException("due date cannot set in past");
-        } else {
+//        if(isValidDate(dueDate) && dueDate.isBefore(LocalDate.now())) {
+//            throw new RuntimeException("due date cannot set in past");
+//        } else {
             Task task = modelMapper.map(taskRequest, Task.class);
             task.setOwner(owner);
             task.setId(null);
             task.setCreationDate(LocalDateTime.now());
             Task savedTask = taskRepository.save(task);
             return modelMapper.map(savedTask, TaskResponse.class);
-        }
+//        }
     }
 
     private boolean isValidDate(LocalDate date) {
@@ -92,11 +95,18 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @CacheEvict(value = "tasks", key = "{#userId, #pageable.pageNumber, #pageable.pageSize}")
+//    @CacheEvict(value = "tasks", key = "{#userId, #pageable.pageNumber, #pageable.pageSize}")
     public void deleteTask(long taskId) {
         if(!taskRepository.existsById(taskId)) {
             throw new NoSuchElementException("task with given id does not exist");
         }
+//        Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("No task found with given"));
+//        List<Attachment> attachments = task.getAttachments();
+//        task.setAttachments(null); // Disassociate attachments from task
+//        for (Attachment attachment : attachments) {
+//            attachment.setTask(null); // Disassociate attachment from task
+//            attachmentRepository.delete(attachment); // Delete attachment
+//        }
          taskRepository.deleteById(taskId);
     }
 
@@ -140,9 +150,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
 //    @Cacheable("taskSummaryCache")
-    public Map<String, Integer> taskSummary(Long userId) {
+    public Map<String, Integer> taskSummary(User user) {
         Map<String, Integer> taskSummary = new HashMap<>();
-        Page<Task> tasks = taskRepository.findByOwnerId(userId, Pageable.unpaged());
+        Page<Task> tasks = taskRepository.findByOwnerId(user.getUserId(), Pageable.unpaged());
 
         long importantTasks = tasks.stream().filter(Task::isImportant).count();
         taskSummary.put("important", (int) importantTasks);
@@ -154,7 +164,10 @@ public class TaskServiceImpl implements TaskService {
         long todayTasksCount = tasks.stream()
                 .filter(task -> task.getDueDate() != null && task.getDueDate().equals(LocalDate.now()))
                 .count();
-        taskSummary.put("my-day", (int) todayTasksCount);
+
+        long myDayTasks = fetchMyDayTasks(user).size();
+
+        taskSummary.put("my-day", (int) myDayTasks);
 
         taskSummary.put("all", tasks.stream().toList().size());
 
@@ -172,11 +185,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<TaskResponse> getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable) {
+        List<Task> sharedTasks = new ArrayList<Task>();
         Specification<Task> specification = ((root, query, criteriaBuilder) -> {
 
             List<Predicate> predicates = new ArrayList<Predicate>();
 
-            predicates.add(criteriaBuilder.equal((root.get("owner").get("id")), userId));
 
             if(status != null) {
                 predicates.add(criteriaBuilder.equal((root.get("taskStatus")), status));
@@ -188,13 +201,30 @@ public class TaskServiceImpl implements TaskService {
                 predicates.add(criteriaBuilder.equal((root.get("isImportant")), isImportant));
             }
             if(sharedWith) {
-                predicates.add(criteriaBuilder.isNotEmpty(root.get("sharedWithUsers")));
+                  predicates.add(criteriaBuilder.isNotEmpty(root.get("sharedWithUsers")));
+                  predicates.add(criteriaBuilder.equal(root.get("owner").get("id"), userId));
+//                predicates.add(criteriaBuilder.isMember(criteriaBuilder.literal(userId, Expression.class, Long.class), root.join("sharedWithUsers", JoinType.INNER)));
+//                predicates.add(criteriaBuilder.isMember(root.get("sharedWithUsers"), n); // Assuming sharedWithJoin is a Join object
+                try {
+                   User user = userRepository.findById(userId)
+                           .orElseThrow(() -> new Exception("User does not exist"));
+                    sharedTasks.addAll(user.getSharedTasks());
+                    sharedTasks.addAll(user.getOwnTasks().stream().filter(task -> task.getSharedWithUsers().size() > 0).toList());
+                } catch (Exception e) {
+                    throw new RuntimeException("error while fetching shared tasks " + e);
+                }
+            } else if (!sharedWith) {
+                predicates.add(criteriaBuilder.equal((root.get("owner").get("id")), userId));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         });
 
         Page<Task> tasks = taskRepository.findAll(specification, pageable);
-        return convertTasksToTaskResponses(tasks.toList());
+
+        List<Task> combinedTasks = new ArrayList<>(tasks.getContent());
+        combinedTasks.addAll(sharedTasks);
+
+        return convertTasksToTaskResponses(combinedTasks);
     }
 
     @Override
@@ -212,6 +242,109 @@ public class TaskServiceImpl implements TaskService {
         }));
         return convertTasksToTaskResponses(tasks);
     }
+
+    @Override
+    public List<TaskResponse> getSharedTask(User user, Pageable pageable) {
+        List<Task> sharedTasks = new ArrayList<>();
+        sharedTasks.addAll(user.getSharedTasks());
+        sharedTasks.addAll(user.getOwnTasks().stream()
+                .filter(task -> !task.getSharedWithUsers().isEmpty())
+                .collect(Collectors.toList()));
+
+        Sort sort = pageable.getSort();
+        if (sort.isSorted()) {
+           List<Sort.Order> orders = sort.stream().toList();
+
+
+        }
+
+        return null;
+    }
+
+    @Override
+    public void addTaskToMyDay(Long taskId, User user) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found with ID: " + taskId));
+        if(!checkTaskOwnership(task, user.getUserId())) {
+            throw new IllegalStateException("Task not owned by user: " + taskId);
+        }
+        MyDayTask myDayTask = new MyDayTask();
+        myDayTask.getTasks().add(task);
+        myDayTask.setUser(user);
+        MyDayTask savedMyDayTask = myDayTaskRepository.save(myDayTask);
+        task.setMyDayTask(savedMyDayTask);
+        task.setPartOfMyDay(true);
+        taskRepository.save(task);
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void MyDayTasksProcessor() {
+        log.info("MyDayTasksProcessor triggered");
+        List<Task> myDayTasks = taskRepository.findByDueDate(LocalDate.now(), TaskStatus.PENDING);
+//        List<Task> myDayTask = tasks.stream().filter(task -> task.getDueDate().isEqual(LocalDate.now())).toList();
+        myDayTasks.forEach(task -> addTaskToMyDay(task.getId(), task.getOwner()));
+        log.info("MyDayTasksProcessor processed " + myDayTasks.size() + " tasks.");
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void MyDateTasksRemovalProcessor() {
+        log.info("MyDateTasksRemovalProcessor triggered");
+
+        List<Task> tasksForRemoval = taskRepository.findByMyDayTaskIsNotNull(LocalDate.now());
+        tasksForRemoval.forEach(task -> addTaskToMyDay(task.getId(), task.getOwner()));
+        log.info("MyDateTasksRemovalProcessor removed " + tasksForRemoval.size() + " tasks.");
+
+    }
+
+
+    private boolean checkTaskOwnership(Task task, Long userId) {
+        return task.getOwner().getUserId().equals(userId) || task.getSharedWithUsers().stream().anyMatch(user -> { return user.getUserId().equals(userId);});
+    }
+
+    private MyDayTask getMyDayTaskById(Long myDayTaskId) {
+        return myDayTaskRepository.findById(myDayTaskId)
+                .orElseThrow(() -> new IllegalStateException("MyDayTask not found with ID: " + myDayTaskId));
+    }
+    @Override
+    public void removeTaskFromMyDay(Long taskId, User user) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found with ID: " + taskId));
+
+        if(!checkTaskOwnership(task, user.getUserId())) {
+            throw new IllegalStateException("Task not owned by user: " + taskId);
+        }
+
+        MyDayTask myDayTask = getMyDayTaskById(task.getMyDayTask().getId());
+        user.getMyDayTaskList().remove(myDayTask);
+        userRepository.save(user);
+
+        myDayTask.getTasks().remove(task);
+        myDayTaskRepository.save(myDayTask);
+
+        task.setMyDayTask(null);
+        task.setPartOfMyDay(false);
+        taskRepository.save(task);
+
+    }
+
+    @Override
+    public List<TaskResponse> fetchMyDayTasks(User user) {
+        List<MyDayTask> myDayTasks = user.getMyDayTaskList();
+        if (myDayTasks == null || myDayTasks.isEmpty()) {
+            throw new IllegalStateException("MyDayTask not found for user: " + user.getUserId());
+        }
+
+//        taskRepository.findAll(ExampleMatcher.matching().withMatcher("description", match -> match.contains())).
+
+        List<Task> tasks = new ArrayList<>();
+        for (MyDayTask myDayTask : myDayTasks) {
+            List<Task> myDayTaskTasks = myDayTask.getTasks();
+            tasks.addAll(myDayTaskTasks);
+        }
+        List<TaskResponse> taskResponses = convertTasksToTaskResponses(tasks);
+        return taskResponses;
+    }
+
 
     private List<TaskResponse> convertTasksToTaskResponses(List<Task> tasks) {
         // Implement the logic to convert Task objects to TaskResponse objects

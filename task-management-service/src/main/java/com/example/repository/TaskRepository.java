@@ -12,9 +12,13 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.Optional;
+
+import static com.example.model.TaskStatus.PENDING;
+
 @Repository
 public interface TaskRepository extends PagingAndSortingRepository<Task, Long>, JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
@@ -46,8 +50,21 @@ public interface TaskRepository extends PagingAndSortingRepository<Task, Long>, 
     boolean isOwnerTryingToShareToHimself(@Param("taskId") Long taskId, @Param("userIds") List<Long> userIds);
 
 
-    @Modifying
-    @Query(nativeQuery = true, value = "DELETE FROM task_master.shared_tasks WHERE task_id = :taskId AND user_id = :userId")
-    void deleteFromSharedTasks(@Param("taskId") Long taskId, @Param("userId") Long userId);
+//    @Modifying
+//    @Query(nativeQuery = true, value = "DELETE FROM task_master.shared_tasks WHERE task_id = :taskId AND user_id = :userId")
+//    void deleteFromSharedTasks(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
+
+    @Query(value = "SELECT t FROM Task t " +
+            "LEFT JOIN t.sharedWithUsers s " +
+            "WHERE s = :user " +
+            "OR (t.owner = :user AND EXISTS (SELECT 1 FROM Task tt WHERE tt = t AND tt.sharedWithUsers IS NOT EMPTY))")
+    Page<Task> findSharedTasksByUser(@Param("user") User user, Pageable pageable);
+
+
+    @Query(value = "SELECT t FROM Task t WHERE t.dueDate = :dueDate AND t.taskStatus = :status" )
+    List<Task> findByDueDate(@Param("dueDate") LocalDate dueDate, @Param("status") TaskStatus taskStatus);
+
+    @Query(value = "SELECT t FROM Task t WHERE t.myDayTask IS NOT NULL AND t.dueDate >= :currentDate")
+    List<Task> findByMyDayTaskIsNotNull(@Param("currentDate") LocalDate currentDate);
 }

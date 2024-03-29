@@ -23,16 +23,19 @@ public class Attachment {
     private String mediaType;
 
     @Lob
+    @Column(length = 1048576) // Example: set the length to 1 MB (1048576 bytes)
     private byte[] data;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String filePath;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = true, fetch = FetchType.LAZY)
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id")
     private Task task;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = true, fetch = FetchType.LAZY)
+
+    @ManyToOne( fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by_user_id")
     private User uploadedBy;
 }

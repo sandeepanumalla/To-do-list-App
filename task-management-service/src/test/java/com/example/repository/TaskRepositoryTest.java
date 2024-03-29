@@ -110,12 +110,14 @@ public class TaskRepositoryTest {
     @Transactional
     void removeOldUsersFromSharedTaskTest() {
         System.out.println(userRepository.findById(1L).get().getSharedTasks().size());
-       taskRepository.deleteFromSharedTasks(1L, 1L);
+//       taskRepository.deleteFromSharedTasks(1L, 1L);
     }
 
     @Test
-    void findSharedTasksByUserId() {
-        List<Task> tasks = taskRepository.findSharedTasksByUserId(1L);
+    void findSharedTasksByUserId() throws Exception {
+        User user = userRepository.findById(2L).orElseThrow(() -> new Exception("User not found"));
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "creationDate"));
+        Page<Task> tasks = taskRepository.findSharedTasksByUser(user, pageable);
         tasks.forEach(task -> System.out.println(task.getTitle()));
     }
 }

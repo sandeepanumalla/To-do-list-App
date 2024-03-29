@@ -19,11 +19,12 @@ let isLoggedIn = () => {
 const signInURL = `${BaseURL}/auth/sign-in`;
 const signOutURL = `${BaseURL}/auth/sign-out`;
 const isAuthenticatedURL = `${BaseURL}/auth`
+const normalAuthRegisterURL = `${BaseURL}/auth/register`;
 
 let SignIn = async (credentials) => {
     let serverResponse;
     try {
-        let payload = payloadCreator(credentials);
+        let payload = signInPayloadCreator(credentials);
         serverResponse = await axiosClient.post(signInURL, payload);
     } catch (error) {
         console.log(error);
@@ -42,16 +43,42 @@ let SignOut = async () => {
     return serverResponse;
 }
 
-let payloadCreator = (payload) => {
+let signInPayloadCreator = (payload) => {
+    console.log("what is payload ? " + JSON.stringify(payload));
     return {
         emailOrUsername: payload.usernameEmail,
         password: payload.password
     }
 }
 
+let registerPayloadCreater = (payload) => {
+    return {
+        username: payload.username,
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        password: payload.password,
+        confirmPassword: payload.confirmPassword
+    }
+
+}
+
+let registerUserUsingForm = async (userDetailsPayload) => {
+    console.log("payload received ", userDetailsPayload);
+    let serverResponse;
+    try {
+        serverResponse = await axiosClient.post(normalAuthRegisterURL, userDetailsPayload);
+        console.log("I have received the response for registering the user api " + serverResponse.data);
+    } catch (error) {
+        console.log("I got an error ", error.response);
+        serverResponse = error;
+    }
+    return serverResponse;
+}
+
 let isAuthenticatedCheck = () => {
 
 }
 
-export { SignIn, SignOut };
+export { SignIn, SignOut, registerUserUsingForm };
 

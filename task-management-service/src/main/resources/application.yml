@@ -17,7 +17,7 @@ spring:
   jpa:
     show-sql: off
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
 #    defer-datasource-initialization: true
   application:
     name: task-management-service
@@ -27,6 +27,9 @@ spring:
       client:
         registration:
           google:
+            client-id: 510095165481-382ece7lvck30beqc5624vrt5922rju6.apps.googleusercontent.com
+            client-secret: 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
+
 
   mail:
     password: skf2
@@ -46,6 +49,8 @@ spring:
     listener:
       direct:
         consumers-per-queue: 5
+
+
 
 #  sql:
 #    init:
@@ -76,6 +81,11 @@ rabbitmq:
 
 upload:
   directory: D:\learnings\spring-uploadfile\src\main\resources\uploaded\
+
+
+jwt:
+  expiration: 3600000
+
 
 #  server.port=8080
 #  spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver

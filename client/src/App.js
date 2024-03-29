@@ -10,38 +10,30 @@ import MyDay from './pages/tasks/MyDay';
 import Planned from './pages/tasks/Planned';
 import Tasks from './pages/tasks/Tasks';
 import Testing from './pages/tasks/Testing';
-
-
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 
 function App() {
-    const items = [
-        { id: 1, title: 'Todo', count: 5 },
-        { id: 2, title: 'In Progress', count: 10 },
-    ];
-
-    const clearFilters = () => {
-        // Add logic to clear filters here
-        console.log('Filters cleared');
-    };
-
     return (
-        <ContextProvider>
-            <div className="App">
-                <Router>
-                    <Routes>
-                        <Route element={<Home></Home>} path='/home'></Route>
-                        <Route element={<MyDay></MyDay>} path='/my-day'></Route>
-                        <Route element={<Planned></Planned>} path='/planned'></Route>
-                        <Route element={<Important></Important>} path='/important'></Route>
-                        <Route element={<AssignedTo></AssignedTo>} path='/assigned-to'></Route>
-                        <Route element={<Tasks></Tasks>} path='/tasks'></Route>
-                        <Route element={<Login></Login>} path='/login'></Route>
-                        <Route element={<Register></Register>} path='/register'></Route>
-                        <Route element={<Testing></Testing>} path='/testing'></Route>
-                    </Routes>
-                </Router>
-            </div>
-        </ContextProvider>
+        <Provider store={store}>
+            <ContextProvider>
+                <div className="App">
+                    <Router>
+                        <Routes>
+                            <Route element={<Home />} path='/home' />
+                            <Route element={<MyDay />} path='/my-day' />
+                            <Route element={<Planned />} path='/planned' />
+                            <Route element={<Important />} path='/important' />
+                            <Route element={<AssignedTo />} path='/assigned-to' />
+                            <Route element={<Tasks />} path='/tasks' />
+                            <Route element={<Login />} path='/login' />
+                            <Route element={<Register />} path='/register' />
+                            <Route element={<Testing />} path='/testing' />
+                        </Routes>
+                    </Router>
+                </div>
+            </ContextProvider>
+        </Provider>
     );
 }
 

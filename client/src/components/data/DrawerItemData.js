@@ -2,7 +2,7 @@
 import { AiOutlineStar } from 'react-icons/ai';
 import { CiUser } from 'react-icons/ci';
 import { GrHomeRounded, GrPlan } from 'react-icons/gr'; //  BsPlusLg
-// import {FcTodoList} from 'react-icons/fc'
+
 import { BsSun } from 'react-icons/bs';
 
 const DrawerItemData = [{
@@ -20,6 +20,17 @@ const DrawerItemData = [{
     "iconElement": <GrPlan color='green'></GrPlan>,
     "page-url": "/planned"
 },
+    {
+        "title": "All",
+        "iconElement": <GrPlan color='green'></GrPlan>,
+        "page-url": "/all"
+    },
+    {
+        "title": "Completed",
+        "iconElement": <GrPlan color='red'></GrPlan>,
+        "page-url": "/planned"
+    },
+
 {
     "title": "Assigned",
     "iconElement": <CiUser color='green'></CiUser>,

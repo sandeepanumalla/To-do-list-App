@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Collection;
 import java.util.Set;
 
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -40,7 +41,7 @@ public class User implements UserDetails, Serializable {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "owner")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "owner", orphanRemoval = true)
     private List<Task> ownTasks;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "sharedWithUsers", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
@@ -64,6 +65,9 @@ public class User implements UserDetails, Serializable {
 
     @OneToMany(mappedBy = "user")
     private List<UserNotification> userNotifications;
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<MyDayTask> myDayTaskList;
 
 //    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
 //    @JoinColumn(name = "signup_type_id", nullable = false)

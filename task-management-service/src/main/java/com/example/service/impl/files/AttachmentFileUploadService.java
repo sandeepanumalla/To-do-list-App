@@ -51,7 +51,7 @@ public class AttachmentFileUploadService implements FileUploadService {
         long taskId = attachmentUploadRequest.getTaskId();
         fileEmptyValidator.setNextValidator(fileTypeValidator);
         fileEmptyValidator.validate(multipartFile);
-        save(multipartFile, attachmentUploadRequest.getOwner());
+        save(attachmentUploadRequest);
         for(User user: notifySharedUsers(taskId)) {
             notificationService.sendNotification(user.getUsername(), "An attachment has been uploaded", NotificationType.FILE_UPLOAD);
         }
@@ -65,11 +65,14 @@ public class AttachmentFileUploadService implements FileUploadService {
 
 
 
-    public void save(MultipartFile multipartFile, User user) {
+    public void save(AttachmentUploadRequest attachmentUploadRequest) {
+        MultipartFile multipartFile = attachmentUploadRequest.getMultipartFile();
+        User user = attachmentUploadRequest.getOwner();
+
         String fileName = multipartFile.getOriginalFilename();
 
         try {
-            Task task = taskRepository.findById(1L).orElseThrow(() -> new IllegalArgumentException("task not found:"));
+            Task task = taskRepository.findById(attachmentUploadRequest.getTaskId()).orElseThrow(() -> new IllegalArgumentException("task not found:"));
             byte[] bytes = multipartFile.getBytes();
             Attachment attachment = Attachment.builder()
                     .data(bytes)

@@ -1,9 +1,6 @@
 package com.example.service;
 
-import com.example.model.Category;
-import com.example.model.Priority;
-import com.example.model.Task;
-import com.example.model.User;
+import com.example.model.*;
 import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.request.TaskRequest;
@@ -19,6 +16,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @SpringBootTest
@@ -50,7 +48,7 @@ public class TaskServiceTest {
                 .description("do a OOPS revision 6pm")
                 .category(Category.PERSONAL)
 //                .priority(Priority.MEDIUM)
-                .dueDate(dueDate)
+//                .dueDate(dueDate)
                 .ownerId(user.get())
                 .build();
 
@@ -94,6 +92,31 @@ public class TaskServiceTest {
     public void updateTaskByTaskIdTestShouldThrowIfNotPresent() {
         long taskId = 53L;
         Task task = taskRepository.findById(taskId).orElse(null);
+    }
+
+//    @Override
+//    public void addTaskToMyDay(Long taskId, User user) {
+//        Task task = taskRepository.findById(taskId)
+//                .orElseThrow(() -> new NoSuchElementException("Task not found with ID: " + taskId));
+//
+//        if(!checkTaskOwnership(task, user.getUserId())) {
+//            throw new IllegalStateException("Task not owned by user: " + taskId);
+//        }
+//        task.getMyDayTasks().add(new MyDayTask(task, user));
+//    }
+
+    @Test
+    public void TestAddTaskToMyDay() throws Exception {
+        User user = userRepository.findById(1L).orElseThrow(() -> new Exception("user not found"));
+        Long taskId = 1L;
+        taskService.addTaskToMyDay(taskId, user);
+    }
+
+    @Test
+    public void TestRemoveFromMyDay() throws Exception {
+        User user = userRepository.findById(1L).orElseThrow(() -> new Exception("user not found"));
+        Long taskId = 1L;
+        taskService.removeTaskFromMyDay(taskId, user);
     }
 
 }

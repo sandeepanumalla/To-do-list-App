@@ -6,6 +6,7 @@
   height: 40vmin;
   pointer-events: none;
 }
+iframe#webpack-dev-server-client-overlay{display:none!important}
 
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {

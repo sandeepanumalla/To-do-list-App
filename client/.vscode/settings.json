@@ -1,5 +1,5 @@
 {
     "editor.codeActionsOnSave": {
-        "source.fixAll": "never"
+        "source.fixAll": false,
     },
 }

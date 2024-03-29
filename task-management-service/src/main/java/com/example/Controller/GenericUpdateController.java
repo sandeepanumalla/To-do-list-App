@@ -18,7 +18,7 @@ public abstract class GenericUpdateController<T, ID> {
     @Autowired
     private JpaRepository<T, ID> repository;
 
-    private static final Set<String> IMMUTABLE_FIELDS = Set.of("id", "createdDate"); // Add other immutable fields here
+    private static final Set<String> IMMUTABLE_FIELDS = Set.of("id", "createdDate");
 
     @PatchMapping("/{id}/{fieldName}")
     public ResponseEntity<?> updateField(@PathVariable ID id, @PathVariable String fieldName, @RequestBody Object newValue) {

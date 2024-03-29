@@ -131,14 +131,12 @@ export function CreateTaskForm({ handleClick }) {
         </IconButton>
         <IconButton onClick={(e) => handleMenuClickForAlarmOptionMenu(e)} sx={{borderRadius:0}}>
           <GiAlarmClock sx={{paddingLeft: '3px'}}>{alarmMenuOptionValue}</GiAlarmClock>
-        </IconButton>
+        </IconButton>w
         <IconButton onClick={(e) => handleMenuClickForTaskRepeatOptionMenu(e)} sx={{borderRadius:0}}>
           <MdOutlineEventRepeat>{taskRepeatMenuOptionValue}</MdOutlineEventRepeat>
         </IconButton>
       </Box>
     </Paper>
-        {/* Your icons and input field */}
-        {/* <Typography>asdfjas;dfjas;kldfj</Typography> */}
       </Paper>
     </Box>
   );
