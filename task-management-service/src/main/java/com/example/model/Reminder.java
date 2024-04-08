@@ -2,6 +2,7 @@ package com.example.model;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import lombok.*;
@@ -13,11 +14,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "reminders")
-public class Reminder {
+public class Reminder implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private LocalDateTime reminderTime;
@@ -27,7 +28,7 @@ public class Reminder {
 
     private boolean isActive;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 }

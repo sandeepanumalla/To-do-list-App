@@ -211,16 +211,14 @@ public class TaskController extends GenericUpdateController<Task, Long>
         }
     }
 
-    @PatchMapping("/{id}/reminders")
-    public ResponseEntity<?> updateRemindersField(@PathVariable Long id, @RequestBody List<Reminder> newValue) {
-        ResponseEntity<?>  response = updateField(id, "reminders", newValue);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            Task updatedTask = (Task) response.getBody();
-            TaskResponse taskResponseDTO = modelMapper.map(updatedTask, TaskResponse.class);
-            return ResponseEntity.ok(taskResponseDTO);
-        } else {
-            return ResponseEntity.status(response.getStatusCode()).build();
-        }
+    @PatchMapping("/{id}/reminder")
+    public ResponseEntity<?> updateRemindersField(@PathVariable Long id, @RequestBody Reminder newValue) {
+//        ResponseEntity<?>  response = updateField(id, "reminders", newValue);
+        // call the cache update.
+        ReminderResponse updateReminder = reminderService.updateReminder(id,  newValue);
+
+        return ResponseEntity.ok(updateReminder);
+
     }
 
 //    @GetMapping // needs to change
@@ -287,7 +285,7 @@ public class TaskController extends GenericUpdateController<Task, Long>
     @GetMapping("/summary")
     public ResponseEntity<?> getTaskSummary(HttpServletRequest request) {
         User user = userService.getUserIdByToken(request);
-        Map<String, Integer> taskSummary = taskService.taskSummary(user);
+        Map<String, List<Long>> taskSummary = taskService.taskSummary(user);
         return ResponseEntity.ok(taskSummary);
     }
 

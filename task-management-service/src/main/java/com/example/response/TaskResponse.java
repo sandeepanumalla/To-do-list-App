@@ -25,6 +25,8 @@ public class TaskResponse implements Serializable {
     private LocalDateTime creationDate;
     private LocalDateTime completionDate;
     private boolean isImportant = false;
+    private boolean isPartOfMyDay = false;
     private TaskStatus taskStatus = TaskStatus.PENDING;
+    private List<TaskStepResponse> steps;
     private List<ReminderResponse> reminders;
 }

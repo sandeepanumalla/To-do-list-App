@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "my_day_task")
+@Table(name = "my_day_task_dup")
 @NoArgsConstructor
 @Data
 public class MyDayTask {

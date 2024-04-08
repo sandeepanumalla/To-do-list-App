@@ -28,7 +28,7 @@ public interface TaskService {
 
     void removeCategoryFromTask(long userId, Long taskId, Long categoryId) throws IllegalAccessException;
 
-    Map<String, Integer> taskSummary(User user);
+    Map<String, List<Long>> taskSummary(User user);
 
     public List<TaskResponse> getAllTasksDup2(long userId, TaskStatus status, Boolean isImportant, String category, Boolean sharedWith, Pageable pageable);
 

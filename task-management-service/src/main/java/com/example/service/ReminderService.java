@@ -4,6 +4,7 @@ import com.example.Controller.GenericUpdateController;
 import com.example.model.Reminder;
 import com.example.request.ReminderRequest;
 import com.example.response.ReminderResponse;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 public interface ReminderService {
@@ -32,7 +33,7 @@ public interface ReminderService {
      * @param updatedReminder the updated reminder details
      * @return the updated reminder
      */
-    Reminder updateReminder(Long taskId, Long reminderId, Reminder updatedReminder);
+    ReminderResponse updateReminder(Long taskId, Reminder updatedReminder);
 
     /**
      * Deletes a reminder from a task.
@@ -43,5 +44,6 @@ public interface ReminderService {
 
     void deleteReminder(Long taskId, Long reminderId, Long userId);
 
-    void sendReminders();
+    @Async
+    void sendReminders(Reminder reminder);
 }

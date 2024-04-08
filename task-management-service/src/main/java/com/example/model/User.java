@@ -66,8 +66,12 @@ public class User implements UserDetails, Serializable {
     @OneToMany(mappedBy = "user")
     private List<UserNotification> userNotifications;
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private List<MyDayTask> myDayTaskList;
+//    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//    private List<MyDayTask> myDayTaskList;
+
+    @ManyToMany(mappedBy = "myDayTasks", cascade = CascadeType.ALL)
+    private List<Task> myDayTasksList;
+
 
 //    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
 //    @JoinColumn(name = "signup_type_id", nullable = false)

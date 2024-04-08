@@ -7,6 +7,7 @@ import org.springframework.data.util.Lazy;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Set;
 
 import java.time.LocalDateTime;
@@ -65,16 +66,22 @@ public class Task implements Serializable {
     @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "task")
     private List<Attachment> attachments;
 
-    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Reminder> reminders;
+    @OneToOne(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Reminder reminder;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "task")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Step> steps;
-
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "my_day_task_id")
     private MyDayTask myDayTask;
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable( name = "my_day_task",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> myDayTasks;
 
     @Column(name = "is_part_of_my_day")
     private boolean isPartOfMyDay;

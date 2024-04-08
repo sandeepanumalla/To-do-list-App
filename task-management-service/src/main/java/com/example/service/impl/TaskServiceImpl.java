@@ -150,34 +150,39 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
 //    @Cacheable("taskSummaryCache")
-    public Map<String, Integer> taskSummary(User user) {
-        Map<String, Integer> taskSummary = new HashMap<>();
+    public Map<String, List<Long>> taskSummary(User user) {
+        Map<String, List<Long>> taskSummary = new HashMap<>();
         Page<Task> tasks = taskRepository.findByOwnerId(user.getUserId(), Pageable.unpaged());
 
-        long importantTasks = tasks.stream().filter(Task::isImportant).count();
-        taskSummary.put("important", (int) importantTasks);
+        List<Long> importantTasks = tasks.stream().filter(Task::isImportant).mapToLong(Task::getId).boxed().collect(Collectors.toList());
+        taskSummary.put("important", importantTasks);
 
-        long completedTasks = tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.COMPLETED).count();
-        taskSummary.put("completed", (int) completedTasks);
+        List<Long> completedTasks = tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.COMPLETED).mapToLong(Task::getId).boxed().collect(Collectors.toList());
+        taskSummary.put("completed", completedTasks);
 
         LocalDate today = LocalDate.now();
         long todayTasksCount = tasks.stream()
                 .filter(task -> task.getDueDate() != null && task.getDueDate().equals(LocalDate.now()))
                 .count();
 
-        long myDayTasks = fetchMyDayTasks(user).size();
+        List<Long> myDayTasks;
+        try {
+             myDayTasks = fetchMyDayTasksWithoutTaskResponse(user);
+        } catch (IllegalStateException exception) {
+            myDayTasks = Collections.emptyList();
+        }
 
-        taskSummary.put("my-day", (int) myDayTasks);
+        taskSummary.put("my-day",  myDayTasks);
 
-        taskSummary.put("all", tasks.stream().toList().size());
+        taskSummary.put("all", tasks.stream().mapToLong(Task::getId).boxed().toList());
 
-        long plannedTasksCount = tasks.stream().filter(task -> task.getDueDate() != null && task.getDueDate().isBefore(LocalDate.now())).count();
-        taskSummary.put("planned-tasks", (int) plannedTasksCount);
+        List<Long> plannedTasks = tasks.stream().filter(task -> task.getDueDate() != null && task.getDueDate().isAfter(LocalDate.now())).mapToLong(Task::getId).boxed().toList();
+        taskSummary.put("planned-tasks", plannedTasks);
 
-        taskSummary.put("assignedTo", 0);
+        taskSummary.put("assignedTo", Collections.emptyList());
 
-        long unCategorizedTasks = tasks.stream().filter(task -> task.getTaskStatus() == null).count();
-        taskSummary.put("unCategorizedTasks", (int) unCategorizedTasks);
+        List<Long> unCategorizedTasks = tasks.stream().filter(task -> task.getTaskStatus() == null).mapToLong(Task::getId).boxed().toList();;
+        taskSummary.put("unCategorizedTasks",  unCategorizedTasks);
 
         return taskSummary;
     }
@@ -268,13 +273,17 @@ public class TaskServiceImpl implements TaskService {
         if(!checkTaskOwnership(task, user.getUserId())) {
             throw new IllegalStateException("Task not owned by user: " + taskId);
         }
-        MyDayTask myDayTask = new MyDayTask();
-        myDayTask.getTasks().add(task);
-        myDayTask.setUser(user);
-        MyDayTask savedMyDayTask = myDayTaskRepository.save(myDayTask);
-        task.setMyDayTask(savedMyDayTask);
-        task.setPartOfMyDay(true);
+        task.getMyDayTasks().add(user);
         taskRepository.save(task);
+        user.getMyDayTasksList().add(task);
+        userRepository.save(user);
+//        MyDayTask myDayTask = new MyDayTask();
+//        myDayTask.getTasks().add(task);
+//        myDayTask.setUser(user);
+//        MyDayTask savedMyDayTask = myDayTaskRepository.save(myDayTask);
+//        task.setMyDayTask(savedMyDayTask);
+//        task.setPartOfMyDay(true);
+//        taskRepository.save(task);
     }
 
     @Scheduled(cron = "0 * * * * *")
@@ -297,7 +306,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
 
-    private boolean checkTaskOwnership(Task task, Long userId) {
+    public boolean checkTaskOwnership(Task task, Long userId) {
         return task.getOwner().getUserId().equals(userId) || task.getSharedWithUsers().stream().anyMatch(user -> { return user.getUserId().equals(userId);});
     }
 
@@ -314,35 +323,55 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("Task not owned by user: " + taskId);
         }
 
-        MyDayTask myDayTask = getMyDayTaskById(task.getMyDayTask().getId());
-        user.getMyDayTaskList().remove(myDayTask);
+        user.getMyDayTasksList().remove(task);
+
+//        MyDayTask myDayTask = getMyDayTaskById(task.getMyDayTask().getId());
+//        user.getMyDayTaskList().remove(myDayTask);
+//        userRepository.save(user);
+//
+//        myDayTask.getTasks().remove(task);
+//        myDayTaskRepository.save(myDayTask);
+//
+//        task.setMyDayTask(null);
+//        task.setPartOfMyDay(false);
+//        taskRepository.save(task);
         userRepository.save(user);
-
-        myDayTask.getTasks().remove(task);
-        myDayTaskRepository.save(myDayTask);
-
-        task.setMyDayTask(null);
-        task.setPartOfMyDay(false);
+        task.getMyDayTasks().remove(user);
         taskRepository.save(task);
-
     }
 
     @Override
     public List<TaskResponse> fetchMyDayTasks(User user) {
-        List<MyDayTask> myDayTasks = user.getMyDayTaskList();
+        List<Task> myDayTasks = user.getMyDayTasksList();
         if (myDayTasks == null || myDayTasks.isEmpty()) {
             throw new IllegalStateException("MyDayTask not found for user: " + user.getUserId());
         }
 
 //        taskRepository.findAll(ExampleMatcher.matching().withMatcher("description", match -> match.contains())).
 
-        List<Task> tasks = new ArrayList<>();
-        for (MyDayTask myDayTask : myDayTasks) {
-            List<Task> myDayTaskTasks = myDayTask.getTasks();
-            tasks.addAll(myDayTaskTasks);
-        }
-        List<TaskResponse> taskResponses = convertTasksToTaskResponses(tasks);
+//        List<Task> tasks = new ArrayList<>();
+//        for (Task myDayTask : myDayTasks) {
+//            List<Task> myDayTaskTasks = myDayTask.getTasks();
+//            tasks.addAll(myDayTaskTasks);
+//        }
+        List<TaskResponse> taskResponses = convertTasksToTaskResponses(myDayTasks);
         return taskResponses;
+    }
+
+    public List<Long> fetchMyDayTasksWithoutTaskResponse(User user) {
+        List<Task> myDayTasks = user.getMyDayTasksList();
+        if (myDayTasks == null || myDayTasks.isEmpty()) {
+            throw new IllegalStateException("MyDayTask not found for user: " + user.getUserId());
+        }
+
+//        taskRepository.findAll(ExampleMatcher.matching().withMatcher("description", match -> match.contains())).
+
+//        List<Task> tasks = new ArrayList<>();
+//        for (MyDayTask myDayTask : myDayTasks) {
+//            List<Task> myDayTaskTasks = myDayTask.getTasks();
+//            tasks.addAll(myDayTaskTasks);
+//        }
+        return myDayTasks.stream().mapToLong(Task::getId).boxed().collect(Collectors.toList());
     }
 
 

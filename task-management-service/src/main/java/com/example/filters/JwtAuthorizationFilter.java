@@ -1,5 +1,6 @@
 package com.example.filters;
 
+import com.example.exceptions.JwtParsingException;
 import com.example.model.User;
 import com.example.utils.JwtAuthenticationProvider;
 import com.example.utils.JwtService;
@@ -78,7 +79,15 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        String username = jwtService.extractUsername(token);
+        String username = "";
+        try {
+            username = jwtService.extractUsername(token);
+
+        } catch (JwtParsingException e) {
+            response.getWriter().println("Invalid or expired token. Please sign in again.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
         User user = User.builder()
                 .username(username)
                 .build();
