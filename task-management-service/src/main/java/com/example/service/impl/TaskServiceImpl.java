@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,35 +37,50 @@ public class TaskServiceImpl implements TaskService {
 
     private final UserRepository userRepository;
 
-    private final CategoryRepository categoryRepository;
+    private final CategoryTableRepository categoryTableRepository;
+    private final TaskStepRepository taskStepRepository;
 
 
     @Autowired
-    public TaskServiceImpl(TaskRepository taskRepository, ModelMapper modelMapper, UserRepository userRepository, CategoryRepository categoryRepository,
-                           AttachmentRepository attachmentRepository, MyDayTaskRepository myDayTaskRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, ModelMapper modelMapper, UserRepository userRepository, CategoryTableRepository categoryTableRepository,
+                           AttachmentRepository attachmentRepository, MyDayTaskRepository myDayTaskRepository, TaskStepRepository taskStepRepository) {
         this.taskRepository = taskRepository;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
+        this.categoryTableRepository = categoryTableRepository;
         this.attachmentRepository = attachmentRepository;
         this.myDayTaskRepository = myDayTaskRepository;
+        this.taskStepRepository = taskStepRepository;
     }
 
 
     @Override
     public TaskResponse createTask(User owner, TaskRequest taskRequest) throws Exception {
-        taskRequest.setCategory(Category.valueOf(taskRequest.getCategory().toString()));
+        // write the code for finding the category by name else throw an exception
+        CategoryTable categoryTable = null;
+        if(taskRequest.getCategoryName() != null) {
+            categoryTable = categoryTableRepository.findByCategoryName(taskRequest.getCategoryName())
+                    .orElseThrow(() -> new NoSuchElementException("Category not found with name: " + taskRequest.getCategoryName()));
+        }
+//        taskRequest.setCategory(Category.valueOf(taskRequest.getCategory().toString()));
+//        taskRequest.set(categoryTable);
         LocalDate dueDate = taskRequest.getDueDate();
-//        if(isValidDate(dueDate) && dueDate.isBefore(LocalDate.now())) {
-//            throw new RuntimeException("due date cannot set in past");
-//        } else {
+//            taskRequest.setOwnerId(owner.getUserId());
             Task task = modelMapper.map(taskRequest, Task.class);
+
             task.setOwner(owner);
             task.setId(null);
             task.setCreationDate(LocalDateTime.now());
+            if(categoryTable!= null) {
+                categoryTable.getTasks().add(task);
+                categoryTableRepository.save(categoryTable);
+                task.setCategory(categoryTable);
+            }
             Task savedTask = taskRepository.save(task);
+            if(taskRequest.isPartOfMyDay()) {
+                addTaskToMyDay(savedTask.getId(), owner);
+            }
             return modelMapper.map(savedTask, TaskResponse.class);
-//        }
     }
 
     private boolean isValidDate(LocalDate date) {
@@ -76,7 +90,6 @@ public class TaskServiceImpl implements TaskService {
         return formattedDate.equals(date.toString());
     }
     @Override
-    @Cacheable(value = "taskResponses", key = "#taskId")
     public TaskResponse getTaskById(long taskId) {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NoSuchElementException("no task found with " + taskId));
         return modelMapper.map(task, TaskResponse.class);
@@ -85,29 +98,32 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @CacheEvict(value = "taskResponses", key = "#taskUpdateRequest.getId()") // Assuming TaskResponse has a userId field
     public TaskResponse updateTask(TaskUpdateRequest taskUpdateRequest) {
+        CategoryTable categoryTable = categoryTableRepository.findByCategoryName(taskUpdateRequest.getCategoryName())
+                .orElseThrow(() -> new NoSuchElementException("Category not found with name: " + taskUpdateRequest.getCategoryName()));
         if(taskRepository.findById(taskUpdateRequest.getId()).isEmpty()) {
             throw new NoSuchElementException("No task found with given task id");
         }
-
         Task updatedTask = modelMapper.map(taskUpdateRequest, Task.class);
+        updatedTask.setCategory(categoryTable);
         Task savedTask = taskRepository.save(updatedTask);
         return modelMapper.map(savedTask, TaskResponse.class);
     }
 
     @Override
 //    @CacheEvict(value = "tasks", key = "{#userId, #pageable.pageNumber, #pageable.pageSize}")
-    public void deleteTask(long taskId) {
+    public void deleteTask(User user, long taskId) {
         if(!taskRepository.existsById(taskId)) {
             throw new NoSuchElementException("task with given id does not exist");
         }
-//        Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("No task found with given"));
-//        List<Attachment> attachments = task.getAttachments();
-//        task.setAttachments(null); // Disassociate attachments from task
-//        for (Attachment attachment : attachments) {
-//            attachment.setTask(null); // Disassociate attachment from task
-//            attachmentRepository.delete(attachment); // Delete attachment
-//        }
-         taskRepository.deleteById(taskId);
+        Task taskToDelete = taskRepository.findById(taskId).orElseThrow(() -> new NoSuchElementException("task with given id does not exist"));
+        // Remove the task from the user's own tasks list
+        user.getOwnTasks().remove(taskToDelete);
+
+
+        // Save the user without cascading deletion to tasks
+        userRepository.save(user);
+        taskRepository.deleteById(taskId);
+//        taskRepository.delete(taskToDelete);
     }
 
     @Override
@@ -115,7 +131,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new NoSuchElementException("Task not found with ID: " + taskId));
 
-        CategoryTable category = categoryRepository.findById(categoryId)
+        CategoryTable category = categoryTableRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException("Category not found with ID: " + categoryId));
 
         boolean isUserOwner = checkUserOwnershipForTasksAndCategory(userId, taskId, categoryId);
@@ -273,39 +289,39 @@ public class TaskServiceImpl implements TaskService {
         if(!checkTaskOwnership(task, user.getUserId())) {
             throw new IllegalStateException("Task not owned by user: " + taskId);
         }
+        if(task.getMyDayTasks() == null) {
+            task.setMyDayTasks(new ArrayList<>());
+        }
         task.getMyDayTasks().add(user);
+        task.setPartOfMyDay(true);
         taskRepository.save(task);
         user.getMyDayTasksList().add(task);
         userRepository.save(user);
-//        MyDayTask myDayTask = new MyDayTask();
-//        myDayTask.getTasks().add(task);
-//        myDayTask.setUser(user);
-//        MyDayTask savedMyDayTask = myDayTaskRepository.save(myDayTask);
-//        task.setMyDayTask(savedMyDayTask);
-//        task.setPartOfMyDay(true);
-//        taskRepository.save(task);
+
     }
 
     @Scheduled(cron = "0 * * * * *")
+    @Transactional
     public void MyDayTasksProcessor() {
         log.info("MyDayTasksProcessor triggered");
-        List<Task> myDayTasks = taskRepository.findByDueDate(LocalDate.now(), TaskStatus.PENDING);
-//        List<Task> myDayTask = tasks.stream().filter(task -> task.getDueDate().isEqual(LocalDate.now())).toList();
-        myDayTasks.forEach(task -> addTaskToMyDay(task.getId(), task.getOwner()));
-        log.info("MyDayTasksProcessor processed " + myDayTasks.size() + " tasks.");
+//        List<Task> myDayTasks = taskRepository.findByDueDate(LocalDate.now(), TaskStatus.PENDING);
+//        myDayTasks.forEach(task -> addTaskToMyDay(task.getId(), task.getOwner()));
+        log.info("MyDayTasksProcessor processed " + 0 + " tasks.");
     }
 
     @Scheduled(cron = "0 * * * * *")
+    @Transactional
     public void MyDateTasksRemovalProcessor() {
         log.info("MyDateTasksRemovalProcessor triggered");
 
-        List<Task> tasksForRemoval = taskRepository.findByMyDayTaskIsNotNull(LocalDate.now());
-        tasksForRemoval.forEach(task -> addTaskToMyDay(task.getId(), task.getOwner()));
-        log.info("MyDateTasksRemovalProcessor removed " + tasksForRemoval.size() + " tasks.");
+//        List<Task> tasksForRemoval = taskRepository.findByMyDayTaskIsNotNull(LocalDate.now());
+//        tasksForRemoval.forEach(task -> removeTaskFromMyDay(task.getId(), task.getOwner()));
+
+        log.info("MyDateTasksRemovalProcessor removed " + 0 + " tasks.");
 
     }
 
-
+    @Override
     public boolean checkTaskOwnership(Task task, Long userId) {
         return task.getOwner().getUserId().equals(userId) || task.getSharedWithUsers().stream().anyMatch(user -> { return user.getUserId().equals(userId);});
     }
@@ -314,6 +330,7 @@ public class TaskServiceImpl implements TaskService {
         return myDayTaskRepository.findById(myDayTaskId)
                 .orElseThrow(() -> new IllegalStateException("MyDayTask not found with ID: " + myDayTaskId));
     }
+
     @Override
     public void removeTaskFromMyDay(Long taskId, User user) {
         Task task = taskRepository.findById(taskId)
@@ -325,18 +342,9 @@ public class TaskServiceImpl implements TaskService {
 
         user.getMyDayTasksList().remove(task);
 
-//        MyDayTask myDayTask = getMyDayTaskById(task.getMyDayTask().getId());
-//        user.getMyDayTaskList().remove(myDayTask);
-//        userRepository.save(user);
-//
-//        myDayTask.getTasks().remove(task);
-//        myDayTaskRepository.save(myDayTask);
-//
-//        task.setMyDayTask(null);
-//        task.setPartOfMyDay(false);
-//        taskRepository.save(task);
         userRepository.save(user);
         task.getMyDayTasks().remove(user);
+        task.setPartOfMyDay(false);
         taskRepository.save(task);
     }
 
@@ -347,30 +355,15 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("MyDayTask not found for user: " + user.getUserId());
         }
 
-//        taskRepository.findAll(ExampleMatcher.matching().withMatcher("description", match -> match.contains())).
-
-//        List<Task> tasks = new ArrayList<>();
-//        for (Task myDayTask : myDayTasks) {
-//            List<Task> myDayTaskTasks = myDayTask.getTasks();
-//            tasks.addAll(myDayTaskTasks);
-//        }
         List<TaskResponse> taskResponses = convertTasksToTaskResponses(myDayTasks);
         return taskResponses;
     }
 
     public List<Long> fetchMyDayTasksWithoutTaskResponse(User user) {
-        List<Task> myDayTasks = user.getMyDayTasksList();
+        List<Task> myDayTasks = user.getMyDayTasksList().stream().filter(task -> task.getTaskStatus() != TaskStatus.COMPLETED).toList();
         if (myDayTasks == null || myDayTasks.isEmpty()) {
             throw new IllegalStateException("MyDayTask not found for user: " + user.getUserId());
         }
-
-//        taskRepository.findAll(ExampleMatcher.matching().withMatcher("description", match -> match.contains())).
-
-//        List<Task> tasks = new ArrayList<>();
-//        for (MyDayTask myDayTask : myDayTasks) {
-//            List<Task> myDayTaskTasks = myDayTask.getTasks();
-//            tasks.addAll(myDayTaskTasks);
-//        }
         return myDayTasks.stream().mapToLong(Task::getId).boxed().collect(Collectors.toList());
     }
 
@@ -387,7 +380,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new NoSuchElementException("Task not found with ID: " + taskId));
 
-        CategoryTable category = categoryRepository.findById(categoryId)
+        CategoryTable category = categoryTableRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException("Category not found with ID: " + categoryId));
 
         return task.getOwner().getUserId().equals(userId) && category.getCategoryOwner().getUserId().equals(userId);

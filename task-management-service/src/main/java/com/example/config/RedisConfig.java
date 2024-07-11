@@ -19,6 +19,7 @@ public class RedisConfig {
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
         configuration.setHostName("localhost");
+//        configuration.setHostName("redis");
         configuration.setPort(6379);
         return new JedisConnectionFactory(configuration);
     }
@@ -35,5 +36,4 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
-
 }

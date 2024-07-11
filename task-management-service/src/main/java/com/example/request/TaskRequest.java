@@ -34,9 +34,9 @@ public class TaskRequest {
     private LocalDate dueDate;
 
     @NotNull(message = "category should not be blank")
-    private Category category;
+    private String categoryName;
 
-    private User ownerId;
+//    private User ownerId;
 
     private LocalDateTime creationDate;
 
@@ -44,6 +44,9 @@ public class TaskRequest {
 
     @Builder.Default
     private boolean isImportant = false;
+
+    @Builder.Default
+    private boolean partOfMyDay = false;
 
     @Builder.Default
     private TaskStatus taskStatus = TaskStatus.PENDING;

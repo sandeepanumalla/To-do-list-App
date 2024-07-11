@@ -19,5 +19,4 @@ public @interface ConfirmPassword {
     Class<? extends Payload>[] payload() default {};
     String password() default "password";
     String confirmPassword() default "confirmPassword";
-
 }

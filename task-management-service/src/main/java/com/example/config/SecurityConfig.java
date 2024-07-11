@@ -34,7 +34,8 @@ public class SecurityConfig {
 
 
 
-    private final String[] allowedUrls = {"/api/auth/**", "/test/**",
+    private final String[] allowedUrls = {
+            "/api/auth/**", "/test/**",
             "/v3/api-docs/**", "/swagger-ui/**",
             "/sign-in",
             "/oauth2/**",

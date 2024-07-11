@@ -7,7 +7,9 @@ target/
     task-management-service/src/main/resources/application-dev.properties
     task-management-service/src/main/resources/.env
 
-
+mysql
+rabbitmq
+redis
 
 ### STS ###
 .apt_generated

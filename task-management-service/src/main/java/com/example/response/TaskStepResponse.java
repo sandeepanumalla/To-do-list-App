@@ -1,5 +1,6 @@
 package com.example.response;
 
+import com.example.model.TaskStepStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -18,4 +19,6 @@ public class TaskStepResponse {
         public String name;
 
         public Integer sequence;
+
+        public TaskStepStatus completionStatus;
 }

@@ -92,7 +92,7 @@ public class TaskStepServiceImpl implements TaskStepService {
     }
 
     @Override
-    public Step updateStep(Long taskId, Long stepId, TaskStepUpdateRequest taskStepRequest, User user) {
+    public TaskStepResponse updateStep(Long taskId, Long stepId, TaskStepUpdateRequest taskStepRequest, User user) {
 
         Task task = getTaskById(taskId);
 
@@ -120,10 +120,13 @@ public class TaskStepServiceImpl implements TaskStepService {
                         stepToBeReplaced.setSequence(currentSequence);
 
                     existingStep.setSequence(taskStepRequest.getSequence());
-            }
+                }
+                if(taskStepRequest.getStatus() != null) {
+                    existingStep.setCompletionStatus(taskStepRequest.getStatus());
+                }
 
-
-            return taskStepRepository.save(existingStep);
+            taskStepRepository.save(existingStep);
+        return modelMapper.map(existingStep, TaskStepResponse.class);
     }
 
     @Override

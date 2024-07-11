@@ -114,9 +114,9 @@ public class ControllerAdvice {
     }
 
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<String> handleValidationException(Exception exception) {
+    public ResponseEntity<String> handleValidationException(ValidationException exception) {
         String errorMessage = "Validation error: " + exception.getCause().getMessage();
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
 //    @ExceptionHandler({SignatureException.class, ValidationException.class})
@@ -206,4 +206,23 @@ public class ControllerAdvice {
                 .status(HttpStatus.CONFLICT)
                 .body("An error occurred during user registration: " + usernameOrEmailAlreadyTakenException.getMessage());
     }
+
+    @ExceptionHandler(value = org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
+        String errorMessage = ex.getMessage();
+
+        // Check if the error message contains the specific error related to missing 'id' field
+        if (errorMessage.contains("Field 'id' doesn't have a default value")) {
+            // Return an appropriate response with a custom error message
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a value for the 'id' field.");
+        }
+
+        // Handle other types of DataIntegrityViolationException if needed
+        // ...
+
+        // Default error response
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+    }
+
+
 }

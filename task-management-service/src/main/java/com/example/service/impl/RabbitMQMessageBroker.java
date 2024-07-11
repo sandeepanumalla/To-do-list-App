@@ -54,16 +54,16 @@ public class RabbitMQMessageBroker implements MessageBroker {
 //             notificationType;
             //                notificationDTO = objectMapper.readValue(json, NotificationDTO.class);
 //            String notificationType = notificationDto.getNotificationType().toString();
-            String json = objectMapper.writeValueAsString(notificationDto);
-            String dynamicTopic = "/topic/" +notificationType +"/" + notificationDto.getRecipientUsername();
-            try {
-                messageTemplate.convertAndSend(dynamicTopic, json);
-                logger.info(String.format("message sent to ws consumer " + dynamicTopic));
-            } catch (Exception e) {
-                logger.error("Error sending message: " + e.getMessage(), e);
-            }
-//             rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
-        } catch (JsonProcessingException | AmqpException e) {
+//            String json = objectMapper.writeValueAsString(notificationDto);
+//            String dynamicTopic = "/topic/" +notificationType +"/" + notificationDto.getRecipientUsername();
+//            try {
+//                messageTemplate.convertAndSend(dynamicTopic, json);
+//                logger.info(String.format("message sent to ws consumer " + dynamicTopic));
+//            } catch (Exception e) {
+//                logger.error("Error sending message: " + e.getMessage(), e);
+//            }
+             rabbitTemplate.convertAndSend(exchangeName, routingKey, notificationDto);
+        } catch ( AmqpException e) {
             throw new RuntimeException(e);
         }
     }

@@ -68,4 +68,13 @@ public class AttachmentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""  + "\"")
                 .body(fileAttachmentResponse.getByteArrayResource());
     }
+
+    @DeleteMapping("/attachments/{attachmentId}")
+    public ResponseEntity<?> deleteAttachment(@PathVariable("attachmentId") String attachmentId) {
+        // delete the file from downloadService
+        // TODO delete the FileAttachmentResponse from downloadService
+        //
+//        fileDownloadService.delete(attachmentId);
+        return ResponseEntity.ok().body("attachment has been deleted successfully");
+    }
 }

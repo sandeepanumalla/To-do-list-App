@@ -8,6 +8,7 @@ import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.response.TaskMember;
 import com.example.response.TaskResponse;
+import com.example.response.UserDTO;
 import com.example.service.UserService;
 import com.example.utils.JwtService;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -138,6 +139,18 @@ public class UserServiceImpl implements UserService {
         return getUser(token).getSharedTasks();
     }
 
+    @Override
+    public List<UserDTO> findUsersByEmailPattern(String email) {
+        List<User> users = userRepository.findByEmailContainingIgnoreCase(email);
+        return users.stream().map((element) -> modelMapper.map(element, UserDTO.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDTO> findUsersByUsernamePattern(String username) {
+        List<User> users = userRepository.findByUsernameContainingIgnoreCase(username);
+        return users.stream().map((element) -> modelMapper.map(element, UserDTO.class)).collect(Collectors.toList());
+    }
+
     private User getUser(String token) {
         String usernameOrEmail = jwtService.extractUsername(token);
         Optional<User> user = userRepository.findUserByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
@@ -147,10 +160,6 @@ public class UserServiceImpl implements UserService {
         }
         return user.get();
     }
-
-
-
-
 
 
     // Implement the conversion logic if necessary

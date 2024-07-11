@@ -9,10 +9,12 @@ import com.example.request.TaskUpdateRequest;
 import com.example.response.TaskResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+@Service
 public interface TaskService {
 //    TaskResponse createTask(TaskRequest taskRequest);
 
@@ -22,7 +24,7 @@ public interface TaskService {
 
     TaskResponse updateTask(TaskUpdateRequest taskUpdateRequest);
 
-    void deleteTask(long taskId);
+    void deleteTask(User user, long taskId);
 
     void addCategoryToTask(long userId, Long taskId, Long categoryId) throws IllegalAccessException;
 
@@ -37,6 +39,8 @@ public interface TaskService {
     public List<TaskResponse> getSharedTask(User user, Pageable pageable);
 
     public void addTaskToMyDay(Long taskId, User user);
+
+    boolean checkTaskOwnership(Task task, Long userId);
 
     public void removeTaskFromMyDay(Long taskId, User userId);
 

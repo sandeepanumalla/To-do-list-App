@@ -1,7 +1,7 @@
 package com.example.service;
 
 import com.example.model.CategoryTable;
-import com.example.repository.CategoryRepository;
+import com.example.repository.CategoryTableRepository;
 import com.example.request.CategoryRequest;
 import com.example.service.impl.CategoryServiceImpl;
 import com.example.taskmanagementservice.TaskManagementServiceApplication;
@@ -11,9 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
-import static org.hamcrest.Matchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,11 +21,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @ContextConfiguration(classes = TaskManagementServiceApplication.class)
 public class CategoryTest {
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryTableRepository categoryTableRepository;
 
     @Mock
     private ModelMapper modelMapper;
@@ -42,7 +43,7 @@ public class CategoryTest {
 
         when(modelMapper.map(ArgumentMatchers.any(CategoryRequest.class), ArgumentMatchers.eq(CategoryTable.class))).thenReturn(categoryTable);
 
-        when(categoryRepository.save(ArgumentMatchers.<CategoryTable>any())).thenReturn(categoryTable);
+        when(categoryTableRepository.save(ArgumentMatchers.<CategoryTable>any())).thenReturn(categoryTable);
 
 //        CategoryTable result = categoryService.createCategory(categoryRequest);
 //

@@ -1,14 +1,15 @@
 package com.example.Controller;
 
 import com.example.config.RestEndpoints;
+import com.example.exceptions.TaskNotFoundException;
 import com.example.model.*;
+import com.example.repository.TaskRepository;
 import com.example.request.*;
+import com.example.response.CategoryResponse;
 import com.example.response.ReminderResponse;
+import com.example.response.TaskRecurrenceResponse;
 import com.example.response.TaskResponse;
-import com.example.service.ReminderService;
-import com.example.service.TaskSharingService;
-import com.example.service.TaskService;
-import com.example.service.UserService;
+import com.example.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -23,6 +24,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @RestController
 @RequestMapping(RestEndpoints.TASKS)
@@ -35,15 +40,20 @@ public class TaskController extends GenericUpdateController<Task, Long>
     private final TaskSharingService sharedTaskService;
 
     private final ModelMapper modelMapper;
+    private final TaskRepository taskRepository;
+    private final TaskRecurrenceService taskRecurrenceService;
 
 
     @Autowired
-    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, TaskSharingService sharedTaskService, ModelMapper modelMapper) {
+    public TaskController(TaskService taskService, UserService userService, ReminderService reminderService, TaskSharingService sharedTaskService, ModelMapper modelMapper,
+                          TaskRepository taskRepository, TaskRecurrenceService taskRecurrenceService) {
         this.taskService = taskService;
         this.userService = userService;
         this.reminderService = reminderService;
         this.sharedTaskService = sharedTaskService;
         this.modelMapper = modelMapper;
+        this.taskRepository = taskRepository;
+        this.taskRecurrenceService = taskRecurrenceService;
     }
 
     @PostMapping(RestEndpoints.CREATE_TASK)
@@ -54,8 +64,10 @@ public class TaskController extends GenericUpdateController<Task, Long>
     }
 
     @DeleteMapping(RestEndpoints.DELETE_TASK)
-    public ResponseEntity<?> deleteTaskById(@PathVariable long taskId) {
-        taskService.deleteTask(taskId);
+    public ResponseEntity<?> deleteTaskById(@PathVariable long taskId, HttpServletRequest httpServletRequest) {
+        User owner = userService.getUserIdByToken(httpServletRequest);
+
+        taskService.deleteTask(owner, taskId);
         return ResponseEntity.ok().body("task has been deleted successfully");
     }
 
@@ -142,7 +154,16 @@ public class TaskController extends GenericUpdateController<Task, Long>
     }
 
     @PatchMapping("/{id}/isImportant")
-    public ResponseEntity<?> updateIsImportantField(@PathVariable Long id, @RequestBody boolean newValue) {
+    public ResponseEntity<?> updateIsImportantField(@PathVariable Long id,
+                                                    HttpServletRequest httpServletRequest,
+                                                    @RequestBody boolean newValue) {
+        User owner = userService.getUserIdByToken(httpServletRequest);
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        boolean isOwner = taskService.checkTaskOwnership(task, owner.getUserId());
+        if(!isOwner) {
+            throw  new RuntimeException("You are not the owner of this task");
+        }
+
         ResponseEntity<?>  response= updateField(id, "isImportant", newValue);
         if (response.getStatusCode().is2xxSuccessful()) {
             Task updatedTask = (Task) response.getBody();
@@ -154,7 +175,16 @@ public class TaskController extends GenericUpdateController<Task, Long>
     }
 
     @PatchMapping("/{id}/title")
-    public ResponseEntity<?> updateTitleField(@PathVariable Long id, @RequestBody String newValue) {
+    public ResponseEntity<?> updateTitleField(@PathVariable Long id, @RequestBody String newValue, HttpServletRequest httpServletRequest) {
+        User owner = userService.getUserIdByToken(httpServletRequest);
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        boolean isOwner = taskService.checkTaskOwnership(task, owner.getUserId());
+        if(!isOwner) {
+            throw  new RuntimeException("You are not the owner of this task");
+        }
+        if (newValue.length() > 100) {
+            throw new RuntimeException("Title cannot be longer than 100 characters");
+        }
         ResponseEntity<?>  response = updateField(id, "title", newValue);
         if (response.getStatusCode().is2xxSuccessful()) {
             Task updatedTask = (Task) response.getBody();
@@ -166,7 +196,16 @@ public class TaskController extends GenericUpdateController<Task, Long>
     }
 
     @PatchMapping("/{id}/description")
-    public ResponseEntity<?> updateDescriptionField(@PathVariable Long id, @RequestBody String newValue) {
+    public ResponseEntity<?> updateDescriptionField(@PathVariable Long id, @RequestBody String newValue, HttpServletRequest httpServletRequest) {
+        User owner = userService.getUserIdByToken(httpServletRequest);
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        boolean isOwner = taskService.checkTaskOwnership(task, owner.getUserId());
+        if(!isOwner) {
+            throw  new RuntimeException("You are not the owner of this task");
+        }
+        if (newValue.length() > 1000) {
+            throw new RuntimeException("Description cannot be longer than 1000 characters");
+        }
         ResponseEntity<?>  response = updateField(id, "description", newValue);
         if (response.getStatusCode().is2xxSuccessful()) {
             Task updatedTask = (Task) response.getBody();
@@ -179,11 +218,12 @@ public class TaskController extends GenericUpdateController<Task, Long>
 
     @PatchMapping("/{id}/due-date")
     public ResponseEntity<?> updateDueDateField(@PathVariable Long id, @RequestBody LocalDate newDueDate, HttpServletRequest httpServletRequest) {
-//
-//        if(newDueDate.isBefore(LocalDate.now())) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("dueDate can't be set to past");
-//        }
-
+        User owner = userService.getUserIdByToken(httpServletRequest);
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        boolean isOwner = taskService.checkTaskOwnership(task, owner.getUserId());
+        if(!isOwner) {
+            throw  new RuntimeException("You are not the owner of this task");
+        }
         ResponseEntity<?>  response = updateField(id, "dueDate", newDueDate);
         if (response.getStatusCode().is2xxSuccessful()) {
             User user = userService.getUserIdByToken(httpServletRequest);
@@ -200,7 +240,14 @@ public class TaskController extends GenericUpdateController<Task, Long>
 
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> updateTaskStatusField(@PathVariable Long id, @RequestBody TaskStatus newValue) {
+    public ResponseEntity<?> updateTaskStatusField(@PathVariable Long id, HttpServletRequest httpServletRequest, @RequestBody TaskStatus newValue) {
+        User owner = userService.getUserIdByToken(httpServletRequest);
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+        boolean isOwner = taskService.checkTaskOwnership(task, owner.getUserId());
+        if(!isOwner) {
+            throw  new RuntimeException("You are not the owner of this task");
+        }
+
         ResponseEntity<?>  response = updateField(id, "taskStatus", newValue);
         if (response.getStatusCode().is2xxSuccessful()) {
             Task updatedTask = (Task) response.getBody();
@@ -218,8 +265,9 @@ public class TaskController extends GenericUpdateController<Task, Long>
         ReminderResponse updateReminder = reminderService.updateReminder(id,  newValue);
 
         return ResponseEntity.ok(updateReminder);
-
     }
+
+
 
 //    @GetMapping // needs to change
 //    public ResponseEntity<?> getAllTasksForUserA(
@@ -258,12 +306,14 @@ public class TaskController extends GenericUpdateController<Task, Long>
             @RequestParam(name = "status", required = false) String taskStatus,
             @RequestParam(name = "category", required = false) String category,
             @RequestParam(name = "shared", required = false) String sharedWithParam,
-            @RequestParam(name = "myDay", required = false) String myDayParam
+            @RequestParam(name = "myDay", required = false) String myDayParam,
+            @RequestParam(name = "filter", required = false) String filterParam
     ) {
         Boolean important = "defaultValue".equals(importantParam) ? null : Boolean.valueOf(importantParam);
         Boolean sharedWith = "defaultValue".equals(sharedWithParam) ? null : Boolean.valueOf(sharedWithParam);
         boolean ascending = !sortBy.startsWith("-");
         SortOption validatedSortBy = validateSortBy(sortBy);
+
 
         TaskStatus status = taskStatus != null ? TaskStatus.valueOf(taskStatus.toUpperCase()) : null;
         Pageable pageable = PageRequest.of(pageNum, pageSize, ascending ?
@@ -279,8 +329,60 @@ public class TaskController extends GenericUpdateController<Task, Long>
             taskResponses = taskService.getAllTasksDup2(user.getUserId(), status, important, category, sharedWith, pageable);
         }
 
+        Map<String, List<TaskResponse>> groupedTasks = new HashMap<>();
+
+        if(filterParam != null) {
+            switch (filterParam.toLowerCase()) {
+                case "myday":
+                    return ResponseEntity.ok(groupByMyDay(groupedTasks, taskResponses));
+                case "planned":
+                    return ResponseEntity.ok(groupByPlanned(groupedTasks, taskResponses));
+                case "all":
+                    return ResponseEntity.ok(groupByCategory(groupedTasks, taskResponses));
+                case "completed":
+                    return ResponseEntity.ok(groupByCategoryAndCompleted(groupedTasks, taskResponses));
+                default:
+                    throw new IllegalArgumentException("Invalid filter parameter: " + filterParam);
+            }
+        }
+
+
         return ResponseEntity.ok(taskResponses);
     }
+
+
+    private Map<String, List<TaskResponse>> groupByMyDay(Map<String, List<TaskResponse>> groupedTasks, List<TaskResponse> tasks) {
+        groupedTasks.put("completed", tasks.stream().filter(taskResponse -> taskResponse.getTaskStatus() == TaskStatus.COMPLETED).collect(Collectors.toList()));
+        groupedTasks.put("incomplete", tasks.stream().filter(taskResponse -> taskResponse.getTaskStatus() != TaskStatus.COMPLETED).collect(Collectors.toList()));
+        return groupedTasks;
+    }
+
+    private Map<String, List<TaskResponse>> groupByPlanned(Map<String, List<TaskResponse>> groupedTasks, List<TaskResponse> tasks) {
+        groupedTasks.put("earlier", tasks.stream()
+                .filter(taskResponse -> !taskResponse.getTaskStatus().equals(TaskStatus.COMPLETED)
+                        && taskResponse.getDueDate().isBefore(LocalDate.now())).collect(Collectors.toList()));
+        groupedTasks.put("today", tasks.stream()
+                .filter(taskResponse -> !taskResponse.getTaskStatus().equals(TaskStatus.COMPLETED)
+                && taskResponse.getDueDate().isEqual(LocalDate.now())).collect(Collectors.toList()));
+        groupedTasks.put("upcoming", tasks.stream()
+                .filter(taskResponse -> !taskResponse.getTaskStatus().equals(TaskStatus.COMPLETED)
+                && taskResponse.getDueDate().isAfter(LocalDate.now())).collect(Collectors.toList()));
+        return groupedTasks;
+    }
+
+
+
+    private Map<String, List<TaskResponse>> groupByCategoryAndCompleted(Map<String, List<TaskResponse>> groupTasks, List<TaskResponse> tasks) {
+        return tasks.stream()
+                .filter(taskResponse -> taskResponse.getTaskStatus().equals(TaskStatus.COMPLETED))
+                .collect(groupingBy(taskResponse -> taskResponse.getCategory().toString()));
+    }
+
+
+    private Map<String, List<TaskResponse>> groupByCategory(Map<String, List<TaskResponse>> groupedTasks, List<TaskResponse> tasks) {
+        return tasks.stream().collect(groupingBy(taskResponse -> taskResponse.getCategory().toString(), Collectors.toList()));
+    }
+
 
     @GetMapping("/summary")
     public ResponseEntity<?> getTaskSummary(HttpServletRequest request) {
@@ -318,5 +420,23 @@ public class TaskController extends GenericUpdateController<Task, Long>
         taskService.removeTaskFromMyDay(taskId, user);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{taskId}/recurrence")
+    public ResponseEntity<TaskRecurrenceResponse> createTaskRecurrence(@PathVariable Long taskId,
+                                                                       @RequestBody TaskRecurrenceRequest taskRecurrenceRequest ,HttpServletRequest request) {
+        User user = userService.getUserIdByToken(request);
+        Task task = taskRepository.findById(taskId).orElseThrow();
+        taskService.checkTaskOwnership(task, user.getUserId());
+        TaskRecurrenceResponse taskRecurrenceResponse = taskRecurrenceService.createTaskRecurrence(taskId, taskRecurrenceRequest);
+        return ResponseEntity.ok().body(taskRecurrenceResponse);
+    }
+
+    @DeleteMapping("/{taskId}/recurrence")
+    public ResponseEntity<?> deleteTaskRecurrence(@PathVariable Long taskId, HttpServletRequest request) {
+        User user = userService.getUserIdByToken(request);
+        taskRecurrenceService.deleteTaskRecurrence(taskId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

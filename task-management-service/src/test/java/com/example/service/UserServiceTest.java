@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @ContextConfiguration(classes = TaskManagementServiceApplication.class)
 public class UserServiceTest {
 
@@ -27,4 +29,5 @@ public class UserServiceTest {
         List<TaskResponse> taskResponseList = userService.getAllTasksWithFiltersApplied(userId, null, null,null);
         Assertions.assertTrue(taskResponseList.size() > 0);
     }
+
 }

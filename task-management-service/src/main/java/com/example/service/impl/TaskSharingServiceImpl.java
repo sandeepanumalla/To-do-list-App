@@ -70,8 +70,8 @@ public class TaskSharingServiceImpl implements TaskSharingService {
 //        String recipientUsername = userRepository.findById(taskShareRequest.getUserSet().stream().toList().get(0)).get().getUsername();
         String message = String.format("Task with title %s has been shared with you", task
                 .orElseThrow(() -> new IllegalArgumentException("Task Not found")).getTitle());
-        List<String> recipients = taskShareRequest.getUserSet().stream()
-                .map(userId -> userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException(String.format("User Id with %d is not a Task Master user", userId))).getUsername())
+        List<String> recipients = taskShareRequest.getUserEmailSet().stream()
+                .map(email -> userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalArgumentException(String.format("User Id with %s is not a Task Master user", email))).getUsername())
                 .toList();
         recipients.forEach(recipient -> notificationService.sendNotification(recipient, message, NotificationType.TASK_SHARED));
 

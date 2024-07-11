@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.example.model.SortOption;
+import com.example.response.UserDTO;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -91,12 +92,6 @@ public class UserController  {
         }
     }
 
-
-//    @GetMapping("/tasks")
-//    public SomeData getMethodName(@RequestParam String param) {
-//        return new SomeData();
-//    }
-    
     public void getAllTasksForUser() {
 
     }
@@ -140,7 +135,17 @@ public class UserController  {
                 : Collections.emptyList();
     }
 
+    @GetMapping("/search")
+    public List<UserDTO> searchUsers(
+                                    @RequestParam(required = false, name = "email") String email,
+                                     @RequestParam(required = false, name = "username") String username) {
 
-
-
+        if (email != null && !email.trim().isEmpty()) {
+            return userService.findUsersByEmailPattern(email);
+        } else if (username != null && !username.trim().isEmpty()) {
+            return userService.findUsersByUsernamePattern(username);
+        } else {
+            return List.of();
+        }
+    }
 }

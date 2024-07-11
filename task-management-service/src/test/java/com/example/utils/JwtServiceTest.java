@@ -30,4 +30,42 @@ public class JwtServiceTest {
         boolean isTokenValid = jwtService.isValidToken(token, user);
         Assertions.assertEquals(user.getUsername(), actualUsername);
     }
+
+    @Test
+    public void testExtractUsername() {
+        // TODO: Implement test logic for token extraction of username
+    }
+
+
+    @Test
+    public void testExtractExpiration() {
+        // TODO: Implement test logic for token extraction of expiration date
+    }
+
+    @Test
+    public void testIsTokenExpired() {
+        // TODO: Implement test logic for token expiration check
+    }
+
+    @Test
+    public void testIsValidToken_ValidToken() {
+        // TODO: Implement test logic for token validity check with a valid token
+    }
+
+    @Test
+    public void testIsValidToken_ExpiredToken() {
+        // TODO: Implement test logic for token validity check with an expired token
+    }
+
+    @Test
+    public void testIsValidToken_IncorrectUsername() {
+        // TODO: Implement test logic for token validity check with an incorrect username
+    }
+
+    @Test
+    public void testIsValidToken_NullUserDetails() {
+        // TODO: Implement test logic for token validity check with null user details
+    }
+
+
 }

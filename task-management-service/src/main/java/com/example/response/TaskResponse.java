@@ -27,6 +27,7 @@ public class TaskResponse implements Serializable {
     private boolean isImportant = false;
     private boolean isPartOfMyDay = false;
     private TaskStatus taskStatus = TaskStatus.PENDING;
+    private TaskRecurrenceResponse taskRecurrence;
     private List<TaskStepResponse> steps;
     private List<ReminderResponse> reminders;
 }

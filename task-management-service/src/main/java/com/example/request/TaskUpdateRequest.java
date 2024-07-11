@@ -32,7 +32,7 @@ public class TaskUpdateRequest {
 
     private Priority priority;
 
-    private Category category;
+    private String categoryName;
 
     private long userId;
 }

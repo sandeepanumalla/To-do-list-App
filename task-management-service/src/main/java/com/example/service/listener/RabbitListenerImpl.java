@@ -25,7 +25,7 @@ public class RabbitListenerImpl {
     }
 
 
-//        @RabbitListener(queues = {"${rabbitmq.queue.name}"})
+        @RabbitListener(queues = {"${rabbitmq.queue.name}"})
         public void receiveMessage(String message) {
             logger.info(String.format("Received message at %s", System.currentTimeMillis()));
             logger.info(String.format("Received message from RabbitMQ consumer: %s", message));

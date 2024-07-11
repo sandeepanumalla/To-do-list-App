@@ -18,7 +18,12 @@ public class TaskShareRequest {
 
     long taskId;
 
-    @Size(min = 1, message = "Please add the userId's to share the task with")
+//    @Size(min = 1, message = "Please add the userId's to share the task with")
             @UniqueElements(message = "userIds should be unique")
     Set<Long> userSet;
+
+    @Size(min = 1, message = "Please add the userEmail's to share the task with")
+            @UniqueElements(message = "userEmail should be unique")
+    Set<String> userEmailSet;
+
 }

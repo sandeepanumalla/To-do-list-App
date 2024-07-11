@@ -2,11 +2,13 @@ package com.example.service.impl;
 
 import com.example.model.Task;
 import com.example.repository.TaskRepository;
+import com.example.repository.UserRepository;
 import com.example.request.TaskShareRequest;
 import com.example.request.TaskUnShareRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -20,17 +22,25 @@ public class TaskShareValidator {
     private static final String NOT_CURRENT_MEMBERS_ERROR = "user is not currently member of the task";
 
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
 
     @Autowired
-    public TaskShareValidator(TaskRepository taskRepository) {
+    public TaskShareValidator(TaskRepository taskRepository,
+                              UserRepository userRepository) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
 
     public void validateShareRequest(TaskShareRequest taskShareRequest) {
         long taskId = taskShareRequest.getTaskId();
-        List<Long> newTaskMemberIds = taskShareRequest.getUserSet().stream().toList();
+        List<String> newTaskMembersEmails = taskShareRequest.getUserEmailSet().stream().toList();
+        List<Long> newTaskMemberIds = new ArrayList<>();
+        newTaskMembersEmails.forEach(email -> {
+            newTaskMemberIds.add(userRepository.findUserByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException(email + "is not registered with us")).getUserId());
+        });
         Long taskOwner = taskShareRequest.getTaskOwner().getUserId();
 
         validateAuthorization(taskId, taskOwner);

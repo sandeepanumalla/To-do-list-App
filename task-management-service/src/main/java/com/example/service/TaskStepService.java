@@ -24,7 +24,7 @@ public interface TaskStepService {
 
     // Update a step for a task
 
-    Step updateStep(Long taskId, Long stepId, TaskStepUpdateRequest taskStepRequest, User user);
+    TaskStepResponse updateStep(Long taskId, Long stepId, TaskStepUpdateRequest taskStepRequest, User user);
 
     // Delete a step for a task
     void deleteStep(Long taskId, Long stepId, User user);

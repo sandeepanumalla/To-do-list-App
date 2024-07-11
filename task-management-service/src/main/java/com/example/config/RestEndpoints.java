@@ -42,6 +42,10 @@ public final class RestEndpoints {
     public static final String UPDATE_CATEGORY =  "/{categoryId}";
     public static final String DELETE_CATEGORY =  "/{categoryId}";
 
+    public static final String SHAREABLE_INVITE_API = "/api/invites";
+
+
+
     // Task Sharing Endpoints
   // -> only owner can invite others
 

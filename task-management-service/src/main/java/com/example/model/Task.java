@@ -1,13 +1,12 @@
 package com.example.model;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.util.Lazy;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Set;
 
 import java.time.LocalDateTime;
@@ -18,6 +17,7 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@EqualsAndHashCode
 @NoArgsConstructor
 public class Task implements Serializable {
 
@@ -41,14 +41,17 @@ public class Task implements Serializable {
 
     private TaskStatus taskStatus;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Nullable
     private CategoryTable category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER
+           // , cascade = CascadeType.ALL
+    )
     @JoinTable(
             name = "shared_tasks",
             joinColumns = @JoinColumn(name = "task_id"),
@@ -76,10 +79,13 @@ public class Task implements Serializable {
     @JoinColumn(name = "my_day_task_id")
     private MyDayTask myDayTask;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.LAZY
+//            , cascade = CascadeType.ALL
+    )
     @JoinTable( name = "my_day_task",
             joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+            inverseJoinColumns = @JoinColumn(name = "user_id"),
+            uniqueConstraints = {@UniqueConstraint(columnNames = {"task_id", "user_id"})}
     )
     private List<User> myDayTasks;
 

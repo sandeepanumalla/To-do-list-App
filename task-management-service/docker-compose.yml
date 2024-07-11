@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.33
+#    container_name: taskmastemysql:8.0.33
+    networks:
+        - task_master_network
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: my_password
+      MYSQL_DATABASE: task_master
+#      MYSQL_USER: root
+#      MYSQL_PASSWORD: my_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    networks:
+        - task_master_network
+#    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+#    container_name: rabbitmq:3.12-management
+    restart: always
+    networks:
+        - task_master_network
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+
+
+  spring-boot-app:
+    image: task_master_image:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+#    container_name: task-master-image
+    networks:
+        - task_master_network
+    ports:
+      - "8081:8081"
+    depends_on:
+            - mysql
+            - redis
+            - rabbitmq
+
+networks:
+  task_master_network:
+    driver: bridge

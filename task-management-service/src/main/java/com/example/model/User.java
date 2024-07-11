@@ -19,11 +19,12 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
+@EqualsAndHashCode
 @Table(name = "user")
 public class User implements UserDetails, Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(nullable = false, unique = true)
@@ -41,10 +42,13 @@ public class User implements UserDetails, Serializable {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "owner", orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "owner"
+//            , cascade = CascadeType.REMOVE
+            , orphanRemoval = true
+    )
     private List<Task> ownTasks;
 
-    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "sharedWithUsers", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "sharedWithUsers", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
 //    @JoinTable(
 //            name = "shared_tasks",
 //            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "userId"),
@@ -69,7 +73,9 @@ public class User implements UserDetails, Serializable {
 //    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 //    private List<MyDayTask> myDayTaskList;
 
-    @ManyToMany(mappedBy = "myDayTasks", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "myDayTasks", fetch = FetchType.EAGER
+//            , cascade = CascadeType.ALL
+    )
     private List<Task> myDayTasksList;
 
 

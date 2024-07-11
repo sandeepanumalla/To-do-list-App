@@ -5,6 +5,7 @@ import com.example.model.Task;
 import com.example.model.TaskStatus;
 import com.example.model.User;
 import com.example.response.TaskResponse;
+import com.example.response.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -23,6 +24,10 @@ public interface UserService {
     User getUserIdByToken(String token);
 
     List<Task> getSharedTasks(String token);
+
+    List<UserDTO> findUsersByEmailPattern(String email);
+
+    List<UserDTO> findUsersByUsernamePattern(String username);
 
 //    public List<TaskResponse>  getAllTasksDup(long userId, TaskStatus status, Boolean isImportant, String category, Pageable pageable);
 

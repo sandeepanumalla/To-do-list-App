@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -38,8 +39,14 @@ public class TaskShareExecutor {
     @Transactional
     public void executeShareTask(TaskShareRequest taskShareRequest) {
         long taskId = taskShareRequest.getTaskId();
+        List<String> newTaskMembersEmails = taskShareRequest.getUserEmailSet().stream().toList();
+        List<Long> newTaskMemberIds = new ArrayList<>();
+        newTaskMembersEmails.forEach(email -> {
+            newTaskMemberIds.add(userRepository.findUserByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException(email + "is not registered with us")).getUserId());
+        });
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NoSuchElementException(TASK_NOT_FOUND_ERROR));
-        List<Long> newTaskMemberIds = taskShareRequest.getUserSet().stream().toList();
+//        List<Long> newTaskMemberIds = taskShareRequest.getUserSet().stream().toList();
         Set<User> newTaskMembers = newTaskMemberIds.stream()
                 .map(each -> userRepository
                         .findById(each)

@@ -3,7 +3,7 @@ package com.example.service.impl;
 import com.example.model.CategoryTable;
 import com.example.model.Task;
 import com.example.model.User;
-import com.example.repository.CategoryRepository;
+import com.example.repository.CategoryTableRepository;
 import com.example.repository.TaskRepository;
 import com.example.repository.UserRepository;
 import com.example.request.CategoryRequest;
@@ -22,16 +22,16 @@ import java.util.Set;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
+    private final CategoryTableRepository categoryTableRepository;
 
     private final UserRepository userRepository;
 
     private final ModelMapper modelMapper;
     private final TaskRepository taskRepository;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, UserRepository userRepository, ModelMapper modelMapper,
+    public CategoryServiceImpl(CategoryTableRepository categoryTableRepository, UserRepository userRepository, ModelMapper modelMapper,
                                TaskRepository taskRepository) {
-        this.categoryRepository = categoryRepository;
+        this.categoryTableRepository = categoryTableRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.taskRepository = taskRepository;
@@ -42,7 +42,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryTable categoryTable = modelMapper.map(categoryRequest, CategoryTable.class);
 
         try {
-            CategoryTable savedTable = categoryRepository.save(categoryTable);
+            CategoryTable savedTable = categoryTableRepository.save(categoryTable);
             return modelMapper.map(savedTable, CategoryResponse.class);
         } catch (DataIntegrityViolationException e) {
             String errorMessage = extractErrorMessageFromDataIntegrityViolationException(e);
@@ -62,7 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryResponse> getAllCategories(User categoryOwner) {
-        List<CategoryTable> categoryTables = categoryRepository.findByCategoryOwner(categoryOwner);
+        List<CategoryTable> categoryTables = categoryTableRepository.findByCategoryOwner(categoryOwner);
         return categoryTables.stream().map(each -> modelMapper.map(each, CategoryResponse.class)).toList();
     }
 
@@ -72,7 +72,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryTable getCategoryByIdAndVerifyOwner(Long categoryId, User owner) throws IllegalAccessException {
-        CategoryTable categoryTable = categoryRepository.findById(categoryId)
+        CategoryTable categoryTable = categoryTableRepository.findById(categoryId)
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
         if (!categoryTable.getCategoryOwner().equals(owner)) {
@@ -89,7 +89,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryTable updatedCategoryTable;
         try {
             categoryTable.setCategoryName(categoryRequest.getCategoryName());
-            updatedCategoryTable = categoryRepository.save(categoryTable);
+            updatedCategoryTable = categoryTableRepository.save(categoryTable);
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete the category", e);
         }
@@ -103,7 +103,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryTable categoryTable = getCategoryByIdAndVerifyOwner(categoryId, owner);
         // Attempt to delete the category
         try {
-            categoryRepository.deleteById(categoryId);
+            categoryTableRepository.deleteById(categoryId);
             return true; // Return true if deletion is successful
         } catch (Exception e) {
             // Log the exception and rethrow a custom exception if needed
@@ -117,14 +117,14 @@ public class CategoryServiceImpl implements CategoryService {
         Long taskId = categoryRequest.getTaskId();
 
         if(taskId != null) {
-            CategoryTable categoryTable = categoryRepository.findById(categoryId).orElseThrow(() -> new IllegalStateException("Category not found"));
+            CategoryTable categoryTable = categoryTableRepository.findById(categoryId).orElseThrow(() -> new IllegalStateException("Category not found"));
             Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task with taskId not found"));
             isUserAuthorized(user, categoryTable);
             Set<Task> taskSet = categoryTable.getTasks();
             taskSet.add(task);
             categoryTable.setTasks(taskSet);
             task.setCategory(categoryTable);
-            categoryRepository.saveAndFlush(categoryTable);
+            categoryTableRepository.saveAndFlush(categoryTable);
             taskRepository.saveAndFlush(task);
         } else {
             throw new IllegalArgumentException("please provide a taskId to add to category");

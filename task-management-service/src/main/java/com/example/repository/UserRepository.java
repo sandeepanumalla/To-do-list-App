@@ -38,4 +38,12 @@ public interface UserRepository extends JpaRepository<User, Long>, PagingAndSort
 //     void deleteSharedTasksForUsers(@Param("userIds") List<Long> userIds, @Param("taskId") Long taskId);
 
      Optional<User> findUserByUsernameOrEmail(String username, String email);
+
+     @Query(value = "SELECT u FROM User u WHERE LOWER(u.email) LIKE LOWER(concat('%', :emailPattern, '%')) ")
+     List<User> findByEmailContainingIgnoreCase(@Param("emailPattern") String emailPattern);
+
+     @Query(value = "SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(concat('%', :usernamePattern, '%')) ")
+     List<User> findByUsernameContainingIgnoreCase(@Param("usernamePattern") String usernamePattern);
+
+
 }

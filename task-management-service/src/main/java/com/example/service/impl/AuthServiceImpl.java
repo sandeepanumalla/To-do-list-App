@@ -101,7 +101,8 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
         Authentication authenticated = customAuthenticationProvider.authenticate(authentication);
         SecurityContextHolder.getContext().setAuthentication(authenticated);
-        return authentication;
+//        return authentication;
+        return authenticated;
     }
 
 
@@ -112,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
         return authenticated;
     }
 
-    private boolean checkAuthentication(String username) {
+    public boolean checkAuthentication(String username) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.isAuthenticated()
                 && authentication.getName().equals(username);

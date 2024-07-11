@@ -3,6 +3,8 @@ package com.example.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -26,5 +28,5 @@ public class CategoryTable {
     private User categoryOwner;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, orphanRemoval = false)
-    private Set<Task> tasks;
+    private Set<Task> tasks = new HashSet<>();
 }

@@ -1,5 +1,5 @@
 package com.example.model;
 
-enum RecurrenceType {
-    DAILY, WEEKLY, MONTHLY, YEARLY, CUSTOM
+public enum RecurrenceType {
+    DAILY, WEEKLY, WEEKDAYS, WEEKENDS, MONTHLY, YEARLY, CUSTOM
 }

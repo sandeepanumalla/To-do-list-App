@@ -19,6 +19,7 @@ public class RabbitConfig {
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
         connectionFactory.setHost("localhost");
+//        connectionFactory.setHost("rabbitmq");
         connectionFactory.setUsername("guest");
         connectionFactory.setPassword("guest");
         connectionFactory.setVirtualHost("/");
@@ -93,6 +94,7 @@ public class RabbitConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setPrefetchCount(10); // Set your desired prefetch count here
+        factory.setDefaultRequeueRejected(false);
         // Other configurations...
         return factory;
     }

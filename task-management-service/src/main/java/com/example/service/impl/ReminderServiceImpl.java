@@ -14,15 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.*;
@@ -80,36 +76,10 @@ public class ReminderServiceImpl extends GenericUpdateController<Reminder, Long>
         // Assuming taskId is known, construct the cache key
         String cacheKey = REMINDER_CACHE_KEY_PREFIX + reminder.getTask().getId();
 
-        // Retrieve existing reminders from Redis cache
-//        Reminder cachedReminders = getCachedReminders(cacheKey);
-//
-//        if (cachedReminders == null) {
-//            cachedReminders = new ArrayList<>();
-//        }
-//        // Append the new reminder to the existing list of reminders
-//        cachedReminders.add(reminder);
-
-        // Update the cache with the updated list of reminders
         redisTemplate.opsForValue().set(cacheKey, reminder);
-//        redisTemplate.sc
-//        redisTemplate.opsForZSet().add(REMINDER_KEY_SET, cacheKey, System.currentTimeMillis());
     }
 
-//    private List<Reminder> getAllRemindersFromCache() {
-////        Set<String> reminderKeys = redisTemplate.opsForSet().members(REMINDER_KEY_SET);
-//        if (reminderKeys == null || reminderKeys.isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//
-//        List<Reminder> reminders = new ArrayList<>();
-//        for (String key : reminderKeys) {
-//            Reminder reminder = (Reminder) redisTemplate.opsForValue().get(key);
-//            if (reminder != null) {
-//                reminders.add(reminder);
-//            }
-//        }
-//        return reminders;
-//    }
+
 
     @Override
     public List<ReminderResponse> getReminders(Long taskId, Long userId)  {
@@ -159,37 +129,6 @@ public class ReminderServiceImpl extends GenericUpdateController<Reminder, Long>
     }
 
     private void updateReminderInCache(Reminder updatedReminder) {
-//        try {
-//            // Assuming taskId is known, construct the cache key
-//            String cacheKey = REMINDER_CACHE_KEY_PREFIX + updatedReminder.getTask().getId();
-//
-//            // Retrieve existing reminders from Redis cache
-//            List<Reminder> cachedReminders = scanAndRetrieveValues(REMINDER_CACHE_KEY_PREFIX + "*");
-//
-//            // Find and update the reminder in the cached list
-//            Optional<Reminder> existingReminderOptional = cachedReminders.stream()
-//                    .filter(reminder -> reminder.getId().equals(updatedReminder.getId()))
-//                    .findFirst();
-//
-//            if (existingReminderOptional.isPresent()) {
-//                // Replace the existing reminder with the updated reminder
-//                cachedReminders.remove(existingReminderOptional.get());
-//                cachedReminders.add(updatedReminder);
-//
-//                // Update the cache with the updated list of reminders
-//                redisTemplate.opsForValue().set(cacheKey, cachedReminders);
-//            } else {
-//                Reminder fetchedReminder = reminderRepository.findById(updatedReminder.getId())
-//                        .orElseThrow(() -> new NoSuchElementException("Reminder not found with ID: " + updatedReminder.getId()));
-//
-//                // Add the fetched reminder to the cache
-//                cachedReminders.add(fetchedReminder);
-//                redisTemplate.opsForValue().set(cacheKey, cachedReminders);
-//            }
-//        } catch (Exception e) {
-//            // Handle any exceptions
-//            e.printStackTrace();
-//        }
         appendReminderToCache(updatedReminder);
     }
 
@@ -259,26 +198,18 @@ public class ReminderServiceImpl extends GenericUpdateController<Reminder, Long>
     @Scheduled(fixedRate = 10000)
     public void checkForDueReminders() {
 
-//        Reminder processedReminders = getCachedReminders();
         List<Reminder> scanAndRetrieveValues = scanAndRetrieveValues(REMINDER_CACHE_KEY_PREFIX + "*");
 
         scanAndRetrieveValues.forEach( reminder -> {
             System.out.println(reminder.getId() + " " +reminder.getMessage() + " " + reminder.getReminderTime());
         });
 
-//        List<Reminder> reminders = processedReminders.stream().filter(reminder -> reminder.getReminderTime()
-//                .isEqual(LocalDateTime.now())).toList();
-
         scanAndRetrieveValues.forEach(reminder -> {
             sendReminders(reminder);
         });
 
-//        System.out.println("reminder watch triggered " + scanAndRetrieveValues.size());
         System.out.println("reminder watch triggered retrieved" + scanAndRetrieveValues.size());
 
-
-
-//        System.out.println(LocalDateTime.now());
     }
 
 
@@ -291,12 +222,4 @@ public class ReminderServiceImpl extends GenericUpdateController<Reminder, Long>
         redisTemplate.delete(cacheKey);
     }
 
-//    private void sendReminders(Reminder reminder) {
-////        Optional<Task> task = taskRepository.findById(reminder.getTask().getId());
-////        if(task.isPresent() && task.get().getSharedWithUsers().isEmpty()) {
-////            String message = "This is a reminder for " + reminder.getTask().getTitle();
-////            notificationService.sendNotification(String.valueOf(task.get().getOwner()), message, NotificationType.REMINDER);
-////            reminder.setActive(false);
-////        }
-//    }
 }
